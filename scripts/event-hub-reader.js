@@ -41,7 +41,7 @@ class EventHubReader {
             startReadMessageCallback(
               events[i].body,
               events[i].enqueuedTimeUtc,
-              events[i].systemProperties["iothub-connection-device-id"]);
+              events[i].properties["source"]);
           }
         },
         processError: (err, context) => {
