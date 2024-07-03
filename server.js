@@ -3,13 +3,18 @@ const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const EventHubReader = require('./scripts/event-hub-reader.js');
+const { convertIotHubToEventHubsConnectionString } = require('./scripts/iot-hub-connection-string.js');
 
 const iotHubConnectionString = process.env.IotHubConnectionString;
-if (!iotHubConnectionString) {
-  console.error(`Environment variable IotHubConnectionString must be specified.`);
-  return;
-}
-console.log(`Using IoT Hub connection string [${iotHubConnectionString}]`);
+var eventHubConnectionString = process.env.EventHubConnectionString;
+
+// if (!eventHubConnectionString && iotHubConnectionString) {
+//   eventHubConnectionString = convertIotHubToEventHubsConnectionString(iotHubConnectionString);
+// } else {
+//   console.error(`Environment variable EventHubConnectionString or IotHubConnectionString must be specified.`);
+//   return;
+// }
+console.log(`Using Event Hub connection string [${eventHubConnectionString}]`);
 
 const eventHubConsumerGroup = process.env.EventHubConsumerGroup;
 console.log(eventHubConsumerGroup);
@@ -46,7 +51,7 @@ server.listen(process.env.PORT || '3000', () => {
   console.log('Listening on %d.', server.address().port);
 });
 
-const eventHubReader = new EventHubReader(iotHubConnectionString, eventHubConsumerGroup);
+const eventHubReader = new EventHubReader(eventHubConnectionString, eventHubConsumerGroup);
 
 (async () => {
   await eventHubReader.startReadMessage((message, date, deviceId) => {

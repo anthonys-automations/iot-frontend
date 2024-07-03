@@ -3,18 +3,33 @@
  */
 
 const { EventHubProducerClient, EventHubConsumerClient } = require('@azure/event-hubs');
-const { convertIotHubToEventHubsConnectionString } = require('./iot-hub-connection-string.js');
+const WebSocket = require('ws');
+const HttpsProxyAgent = require('https-proxy-agent');
+
+const http_proxy = process.env.http_proxy;
+const proxyAgent = new HttpsProxyAgent(http_proxy);
 
 class EventHubReader {
-  constructor(iotHubConnectionString, consumerGroup) {
-    this.iotHubConnectionString = iotHubConnectionString;
+  constructor(eventHubConnectionString, consumerGroup) {
+    this.eventHubConnectionString = eventHubConnectionString;
     this.consumerGroup = consumerGroup;
   }
 
   async startReadMessage(startReadMessageCallback) {
     try {
-      const eventHubConnectionString = await convertIotHubToEventHubsConnectionString(this.iotHubConnectionString);
-      const consumerClient = new EventHubConsumerClient(this.consumerGroup, eventHubConnectionString);
+      var clientOptions = {};
+      if (http_proxy) {
+        console.log(`Using proxy server at [${http_proxy}]`);
+      
+        clientOptions = {
+          webSocketOptions: {
+            webSocket: WebSocket,
+            webSocketConstructorOptions: { agent: proxyAgent }
+          }
+        };
+      }
+
+      const consumerClient = new EventHubConsumerClient(this.consumerGroup, this.eventHubConnectionString, clientOptions);
       console.log('Successfully created the EventHubConsumerClient from IoT Hub event hub-compatible connection string.');
 
       const partitionIds = await consumerClient.getPartitionIds();
