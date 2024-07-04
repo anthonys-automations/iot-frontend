@@ -17,12 +17,7 @@ app.get('/api/telemetry', async (req, res) => {
     try {
         console.log(`Received request for /api/telemetry`);
         const data = await cosmosDBReader.getItems();
-        const formattedData = data.map(item => ({
-            properties: item.properties,
-            timestamp: item.timestamp,
-            ...item.body
-        }));
-        console.log(`Sending response with data: ${JSON.stringify(data, null, 2)}`);
+        // console.log(`Sending response with data: ${JSON.stringify(data, null, 2)}`);
         res.json(data);
     } catch (error) {
         console.error(`Error in /api/telemetry: ${error.message}`);
