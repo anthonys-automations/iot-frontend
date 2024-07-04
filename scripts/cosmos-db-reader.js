@@ -44,7 +44,7 @@ class CosmosDBReader {
               parameters: [{ name: '@source', value: source }]
           };
           const { resources: items } = await container.items.query(query).fetchAll();
-          console.log(`Fetched device details: ${JSON.stringify(items, null, 2)}`);
+        //   console.log(`Fetched device details: ${JSON.stringify(items, null, 2)}`);
           return items;
       } catch (error) {
           console.error(`Error fetching device details: ${error.message}`);
