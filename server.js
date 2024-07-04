@@ -1,22 +1,33 @@
 const express = require('express');
 const path = require('path');
-const EventHubReader = require('./scripts/event-hub-reader.js');
-var eventHubConnectionString = process.env.EventHubConnectionString;
-const eventHubConsumerGroup = process.env.EventHubConsumerGroup;
-console.log(eventHubConsumerGroup);
-if (!eventHubConsumerGroup) {
-  console.error(`Environment variable EventHubConsumerGroup must be specified.`);
-  return;
-}
-console.log(`Using event hub consumer group [${eventHubConsumerGroup}]`);
+const CosmosDBReader = require('./scripts/cosmos-db-reader.js');
+
+const cosmosEndpoint = process.env.CosmosEndpoint;
+const cosmosDatabaseId = process.env.CosmosDatabaseId;
+const cosmosContainerId = process.env.CosmosContainerId;
+
+console.log(`Starting server with Cosmos DB endpoint: ${cosmosEndpoint}, databaseId: ${cosmosDatabaseId}, containerId: ${cosmosContainerId}`);
+
 const app = express();
-const eventHubReader = new EventHubReader(eventHubConnectionString, eventHubConsumerGroup);
+const cosmosDBReader = new CosmosDBReader(cosmosEndpoint, cosmosDatabaseId, cosmosContainerId);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/telemetry', async (req, res) => {
-    const data = await eventHubReader.getMessages();
-    res.json(data);
+    try {
+        console.log(`Received request for /api/telemetry`);
+        const data = await cosmosDBReader.getItems();
+        const formattedData = data.map(item => ({
+            properties: item.properties,
+            timestamp: item.timestamp,
+            ...item.body
+        }));
+        console.log(`Sending response with data: ${JSON.stringify(data, null, 2)}`);
+        res.json(data);
+    } catch (error) {
+        console.error(`Error in /api/telemetry: ${error.message}`);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 const port = process.env.PORT || 3000;
