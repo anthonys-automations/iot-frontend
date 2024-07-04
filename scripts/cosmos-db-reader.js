@@ -20,23 +20,37 @@ class CosmosDBReader {
         this.containerId = containerId;
     }
 
-    async getItems() {
+    async getDeviceSources() {
         try {
-            console.log(`Fetching items from database: ${this.databaseId}, container: ${this.containerId}`);
+            console.log(`Fetching device sources from database: ${this.databaseId}, container: ${this.containerId}`);
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
-            const { resources: items } = await container.items.query('SELECT * FROM c').fetchAll();
-            console.log(`Fetched items: ${JSON.stringify(items, null, 2)}`);
-            return items.map(item => ({
-                properties: item.Properties,
-                timestamp: item.SystemProperties["iothub-enqueuedtime"],
-                ...item.Body
-            }));
+            const { resources: items } = await container.items.query('SELECT DISTINCT c.Properties.source FROM c ORDER BY c.Properties.source').fetchAll();
+            console.log(`Fetched device sources: ${JSON.stringify(items, null, 2)}`);
+            return items;
         } catch (error) {
-            console.error(`Error fetching items: ${error.message}`);
+            console.error(`Error fetching device sources: ${error.message}`);
             throw error;
         }
     }
+
+    async getDeviceDetails(source) {
+      try {
+          console.log(`Fetching device details for source: ${source}`);
+          const database = this.client.database(this.databaseId);
+          const container = database.container(this.containerId);
+          const query = {
+              query: 'SELECT * FROM c WHERE c.Properties.source = @source',
+              parameters: [{ name: '@source', value: source }]
+          };
+          const { resources: items } = await container.items.query(query).fetchAll();
+          console.log(`Fetched device details: ${JSON.stringify(items, null, 2)}`);
+          return items;
+      } catch (error) {
+          console.error(`Error fetching device details: ${error.message}`);
+          throw error;
+      }
+  }
 }
 
 module.exports = CosmosDBReader;

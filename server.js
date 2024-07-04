@@ -13,16 +13,25 @@ const cosmosDBReader = new CosmosDBReader(cosmosEndpoint, cosmosDatabaseId, cosm
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api/telemetry', async (req, res) => {
-    try {
-        console.log(`Received request for /api/telemetry`);
-        const data = await cosmosDBReader.getItems();
-        // console.log(`Sending response with data: ${JSON.stringify(data, null, 2)}`);
-        res.json(data);
-    } catch (error) {
-        console.error(`Error in /api/telemetry: ${error.message}`);
-        res.status(500).json({ error: error.message });
-    }
+app.get('/api/devices', async (req, res) => {
+  try {
+      const data = await cosmosDBReader.getDeviceSources();
+      res.json(data);
+  } catch (error) {
+      console.error(`Error in /api/devices: ${error.message}`);
+      res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/device-details', async (req, res) => {
+  try {
+      const source = req.query.source;
+      const data = await cosmosDBReader.getDeviceDetails(source);
+      res.json(data);
+  } catch (error) {
+      console.error(`Error in /api/device-details: ${error.message}`);
+      res.status(500).json({ error: error.message });
+  }
 });
 
 const port = process.env.PORT || 3000;

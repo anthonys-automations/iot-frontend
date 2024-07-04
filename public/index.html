@@ -1,23 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>IoT Hub Telemetry Data</title>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <meta charset="UTF-8">
+    <title>Telemetry Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1>IoT Hub Telemetry Data</h1>
-    <div>
-        <label for="sourceSelect">Select Source:</label>
-        <select id="sourceSelect"></select>
+    <div class="top-bar">Telemetry Dashboard</div>
+    <div class="main-content">
+        <div class="left-pane" id="device-list">
+            <!-- Device list will be populated here -->
+        </div>
+        <div class="right-pane" id="device-details">
+            <div id="device-info">
+                <!-- Device details will be shown here -->
+            </div>
+            <div class="graph-container">
+                <select id="parameter-select">
+                    <!-- Parameter options will be populated here -->
+                </select>
+                <div id="graph"></div>
+            </div>
+        </div>
     </div>
-    <div>
-        <label for="keySelect">Select Key:</label>
-        <select id="keySelect"></select>
-    </div>
-    <canvas id="chart"></canvas>
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
-    <script src="js/chart-device-data.js"></script>
+    <script src="js/scripts.js"></script>
 </body>
 </html>

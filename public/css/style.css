@@ -1,46 +1,46 @@
 body {
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-  padding: 50px;
-  margin: 0;
-  text-align: center;
-}
-
-.flexHeader {
   display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: space-between;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
 }
 
-a {
-  color: #00B7FF;
+.top-bar {
+  background-color: #4CAF50;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  font-size: 1.5rem;
 }
 
-body select {
-  padding: 10px 70px 10px 13px;
-  max-width: 100%;
-  height: auto;
-  border: 1px solid #e3e3e3;
-  border-radius: 3px;
-  background: url("https://i.ibb.co/b7xjLrB/selectbox-arrow.png") right center no-repeat;
-  background-color: #fff;
-  color: #444444;
-  line-height: 16px;
-  appearance: none;
-  /* this is must */ -webkit-appearance: none;
-  -moz-appearance: none;
+.main-content {
+  display: flex;
+  flex: 1;
 }
 
-/* body select.select_box option */
-body select option {
-  padding: 0 4px;
+.left-pane {
+  width: 20%;
+  background-color: #f0f0f0;
+  overflow-y: auto;
+  padding: 1rem;
 }
 
-/* for Edge */
-select::-ms-expand {
-  display: none;
+.right-pane {
+  flex: 1;
+  padding: 1rem;
 }
 
-select:disabled::-ms-expand {
-  background: #f60;
+.device-item {
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background-color: #e0e0e0;
+}
+
+.device-item:hover {
+  background-color: #d0d0d0;
+}
+
+.graph-container {
+  margin-top: 1rem;
 }
