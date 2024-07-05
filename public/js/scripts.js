@@ -54,7 +54,11 @@ function drawGraph(data, parameter) {
 
   const ctx = canvas.getContext('2d');
   const values = data.map(item => item.Body[parameter]);
-  const labels = data.map(item => new Date(item.SystemProperties["iothub-enqueuedtime"]).toLocaleTimeString());
+  const labels = data.map(item => new Date(item.SystemProperties["iothub-enqueuedtime"]).toISOString());
+
+  // console.log('Data:', data); // Log the filtered data
+  // console.log('Labels:', labels); // Log the labels
+  // console.log('Values:', values); // Log the values
 
   new Chart(ctx, {
       type: 'line',
@@ -73,7 +77,10 @@ function drawGraph(data, parameter) {
       options: {
           scales: {
               x: {
-                  beginAtZero: true
+                  type: 'time',
+                  time: {
+                    unit: 'day'
+                  }
               },
               y: {
                   beginAtZero: true
