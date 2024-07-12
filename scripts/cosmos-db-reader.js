@@ -1,19 +1,16 @@
+
 const { CosmosClient } = require('@azure/cosmos');
 const { DefaultAzureCredential } = require('@azure/identity');
 const HttpsProxyAgent = require('https-proxy-agent');
 
 class CosmosDBReader {
     constructor(endpoint, databaseId, containerId) {
-        console.log(`Initializing CosmosDBReader with endpoint: ${endpoint}, databaseId: ${databaseId}, containerId: ${containerId}`);
-
-        // Use proxy settings from environment variables
         const http_proxy = process.env.http_proxy;
         const proxyAgent = new HttpsProxyAgent(http_proxy);
 
         this.client = new CosmosClient({
             endpoint,
             agent: proxyAgent,
-            // key: "fOcC1URYChAu4KeS4WTxvz8kl1GdkhjM2FX5JdU8VzbJuttKcd78YE7RETvTNdOuSHAmDskVAsQCACDb1TkzCg=="
             aadCredentials: new DefaultAzureCredential()
         });
         this.databaseId = databaseId;
@@ -34,20 +31,38 @@ class CosmosDBReader {
         }
     }
 
-    async getDeviceDetails(source) {
-      try {
-          console.log(`Fetching device details for source: ${source}`);
+    async getDeviceDetails(source, month) {
+        try {
+          console.log(`Fetching device details for source: ${source} and month: ${month}`);
           const database = this.client.database(this.databaseId);
           const container = database.container(this.containerId);
           const query = {
-              query: 'SELECT * FROM c WHERE c.Properties.source = @source',
+            query: 'SELECT * FROM c WHERE c.Properties.source = @source AND c.month = @month',
+            parameters: [
+              { name: '@source', value: source },
+              { name: '@month', value: month }
+            ]
+          };
+          const { resources: items } = await container.items.query(query).fetchAll();
+          return items;
+        } catch (error) {
+          console.error(`Error fetching details for source: ${source} and month: ${month} - ${error.message}`);
+          throw error;
+        }
+      }
+      
+  async getDistinctMonths(source) {
+      try {
+          const database = this.client.database(this.databaseId);
+          const container = database.container(this.containerId);
+          const query = {
+              query: 'SELECT DISTINCT c.month FROM c WHERE c.Properties.source = @source ORDER BY c.month DESC',
               parameters: [{ name: '@source', value: source }]
           };
           const { resources: items } = await container.items.query(query).fetchAll();
-        //   console.log(`Fetched device details: ${JSON.stringify(items, null, 2)}`);
-          return items;
+          return items.map(item => item.month);
       } catch (error) {
-          console.error(`Error fetching device details: ${error.message}`);
+          console.error(`Error fetching months for source ${source}: ${error.message}`);
           throw error;
       }
   }

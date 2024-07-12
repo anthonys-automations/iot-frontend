@@ -1,3 +1,4 @@
+
 document.addEventListener("DOMContentLoaded", () => {
   fetchDevices();
 });
@@ -20,29 +21,119 @@ function displayDevices(devices) {
   });
 }
 
-async function fetchDeviceDetails(source) {
-  const response = await fetch(`/api/device-details?source=${source}`);
-  const details = await response.json();
-  displayDeviceDetails(details);
+async function fetchMonthsForSource(source) {
+  const response = await fetch(`/api/device-months?source=${source}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch months for source: ${source}`);
+  }
+  const months = await response.json();
+  return months;
 }
 
-function displayDeviceDetails(details) {
+let selectedParameter = null;
+let selectedMonth = null;
+
+async function fetchAndDisplayDataForMonth(source, month, parameter) {
+  try {
+    const response = await fetch(`/api/device-details?source=${source}&month=${month}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch device details for source: ${source} and month: ${month}`);
+    }
+    const details = await response.json();
+
+    // Debug: Log the details to ensure they are correct
+    console.log('Fetched details:', details);
+
+    if (!details || details.length === 0) {
+      throw new Error(`No details found for source: ${source} and month: ${month}`);
+    }
+
+    drawGraph(details, parameter);
+  } catch (error) {
+    console.error(error.message);
+    alert(error.message);
+  }
+}
+
+async function fetchDeviceDetails(source) {
+  try {
+    // Fetch months for the source first
+    const months = await fetchMonthsForSource(source);
+
+    // Auto-select the last available month
+    const lastAvailableMonth = months[0]; // Assuming months are in descending order
+
+    if (!lastAvailableMonth) {
+      throw new Error(`No months available for source: ${source}`);
+    }
+
+    // Fetch details for the source and the last available month
+    const response = await fetch(`/api/device-details?source=${source}&month=${lastAvailableMonth}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch device details for source: ${source}`);
+    }
+    const details = await response.json();
+    if (!details || details.length === 0) {
+      throw new Error(`No details found for source: ${source} and month: ${lastAvailableMonth}`);
+    }
+    displayDeviceDetails(details, source, lastAvailableMonth, months);
+  } catch (error) {
+    console.error(error.message);
+    alert(error.message);
+  }
+}
+
+async function displayDeviceDetails(details, source, selectedMonth, months) {
+  if (!details || details.length === 0) {
+    console.error(`No details available to display for source: ${source}`);
+    return;
+  }
+
   const deviceInfo = document.getElementById('device-info');
   deviceInfo.innerHTML = `<h2>Device: ${details[0].Properties.source}</h2>`;
-  
+
   const parameterSelect = document.getElementById('parameter-select');
   parameterSelect.innerHTML = '';
 
   const parameters = Object.keys(details[0].Body);
   parameters.forEach(key => {
-      const option = document.createElement('option');
-      option.value = key;
-      option.textContent = key;
-      parameterSelect.appendChild(option);
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = key;
+    parameterSelect.appendChild(option);
   });
 
-  parameterSelect.onchange = () => drawGraph(details, parameterSelect.value);
-  drawGraph(details, parameters[0]);
+  // Populate the month select element
+  const monthSelect = document.getElementById('month-select');
+  monthSelect.innerHTML = '';
+
+  months.forEach(month => {
+    const option = document.createElement('option');
+    option.value = month;
+    option.textContent = month;
+    monthSelect.appendChild(option);
+  });
+
+  // Preselect the last available month or the previously selected month
+  monthSelect.value = selectedMonth;
+
+  // Preselect the previously selected parameter if available
+  if (selectedParameter && parameters.includes(selectedParameter)) {
+    parameterSelect.value = selectedParameter;
+  } else {
+    selectedParameter = parameters[0];
+  }
+
+  parameterSelect.onchange = () => {
+    selectedParameter = parameterSelect.value;
+    drawGraph(details, parameterSelect.value);
+  };
+  monthSelect.onchange = () => {
+    selectedMonth = monthSelect.value;
+    fetchAndDisplayDataForMonth(source, monthSelect.value, parameterSelect.value);
+  };
+
+  fetchAndDisplayDataForMonth(source, selectedMonth, parameterSelect.value);
 }
 
 function drawGraph(data, parameter) {
@@ -53,39 +144,54 @@ function drawGraph(data, parameter) {
   graphContainer.appendChild(canvas);
 
   const ctx = canvas.getContext('2d');
-  const values = data.map(item => item.Body[parameter]);
-  const labels = data.map(item => new Date(item.SystemProperties["iothub-enqueuedtime"]).toISOString());
+  
+  // Map the data to labels and values
+  const labels = data.map(item => new Date(item.SystemProperties["iothub-enqueuedtime"]));
+  const values = data.map(item => Number(item.Body[parameter]));
 
-  // console.log('Data:', data); // Log the filtered data
-  // console.log('Labels:', labels); // Log the labels
-  // console.log('Values:', values); // Log the values
+  // Debug: Log the labels and values to ensure they are correct
+  console.log('Labels:', labels);
+  console.log('Values:', values);
 
+  // Create the chart
   new Chart(ctx, {
-      type: 'line',
-      data: {
-          labels: labels,
-          datasets: [{
-              label: parameter,
-              data: values,
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 1,
-              spanGaps: true,
-              tension: 0.4, // Add tension for smooth line
-              fill: false
-          }]
-      },
-      options: {
-          scales: {
-              x: {
-                  type: 'time',
-                  time: {
-                    unit: 'day'
-                  }
-              },
-              y: {
-                  beginAtZero: true
-              }
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: parameter,
+        data: values,
+        borderWidth: 1,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: false
+      }]
+    },
+    options: {
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'minute',
+            tooltipFormat: 'll HH:mm'
+          },
+          title: {
+            display: true,
+            text: 'Timestamp'
           }
+        },
+        y: {
+          title: {
+            display: true,
+            text: parameter
+          }
+        }
+      },
+      elements: {
+        line: {
+          tension: 0.4 // Smooth the line
+        }
       }
+    }
   });
 }

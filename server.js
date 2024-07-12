@@ -1,6 +1,7 @@
+
 const express = require('express');
-const path = require('path');
-const CosmosDBReader = require('./scripts/cosmos-db-reader.js');
+const compression = require('compression');
+const app = express();
 
 const cosmosEndpoint = process.env.CosmosEndpoint;
 const cosmosDatabaseId = process.env.CosmosDatabaseId;
@@ -8,9 +9,11 @@ const cosmosContainerId = process.env.CosmosContainerId;
 
 console.log(`Starting server with Cosmos DB endpoint: ${cosmosEndpoint}, databaseId: ${cosmosDatabaseId}, containerId: ${cosmosContainerId}`);
 
-const app = express();
+const CosmosDBReader = require('./scripts/cosmos-db-reader.js');
 const cosmosDBReader = new CosmosDBReader(cosmosEndpoint, cosmosDatabaseId, cosmosContainerId);
 
+const path = require('path');
+app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/devices', async (req, res) => {
@@ -24,17 +27,29 @@ app.get('/api/devices', async (req, res) => {
 });
 
 app.get('/api/device-details', async (req, res) => {
+  const source = req.query.source;
+  const month = req.query.month;
   try {
-      const source = req.query.source;
-      const data = await cosmosDBReader.getDeviceDetails(source);
-      res.json(data);
+    console.log(`Fetching device details for source: ${source} and month: ${month}`);
+    const details = await cosmosDBReader.getDeviceDetails(source, month);
+    if (!details || details.length === 0) {
+      console.error(`No details found for source: ${source} and month: ${month}`);
+    }
+    res.json(details);
   } catch (error) {
-      console.error(`Error in /api/device-details: ${error.message}`);
-      res.status(500).json({ error: error.message });
+    console.error(`Error fetching details for source: ${source} and month: ${month} - ${error.message}`);
+    res.status(500).json({ error: error.message });
   }
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+app.get('/api/device-months', async (req, res) => {
+  const source = req.query.source;
+  const months = await cosmosDBReader.getDistinctMonths(source);
+  res.json(months);
+});
+
+// Existing routes
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
 });
