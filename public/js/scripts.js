@@ -33,28 +33,6 @@ async function fetchMonthsForSource(source) {
 let selectedParameter = null;
 let selectedMonth = null;
 
-async function fetchAndDisplayDataForMonth(source, month, parameter) {
-  try {
-    const response = await fetch(`/api/device-details?source=${source}&month=${month}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch device details for source: ${source} and month: ${month}`);
-    }
-    const details = await response.json();
-
-    // Debug: Log the details to ensure they are correct
-    console.log('Fetched details:', details);
-
-    if (!details || details.length === 0) {
-      throw new Error(`No details found for source: ${source} and month: ${month}`);
-    }
-
-    drawGraph(details, parameter);
-  } catch (error) {
-    console.error(error.message);
-    alert(error.message);
-  }
-}
-
 async function fetchDeviceDetails(source) {
   try {
     // Fetch months for the source first
@@ -95,8 +73,14 @@ async function displayDeviceDetails(details, source, selectedMonth, months) {
   const parameterSelect = document.getElementById('parameter-select');
   parameterSelect.innerHTML = '';
 
-  const parameters = Object.keys(details[0].Body);
-  parameters.forEach(key => {
+  // Collect all unique parameters
+  const allParameters = new Set();
+  details.forEach(detail => {
+    Object.keys(detail.Body).forEach(key => allParameters.add(key));
+  });
+
+  // Populate the parameter dropdown with all unique parameters
+  allParameters.forEach(key => {
     const option = document.createElement('option');
     option.value = key;
     option.textContent = key;
@@ -118,10 +102,10 @@ async function displayDeviceDetails(details, source, selectedMonth, months) {
   monthSelect.value = selectedMonth;
 
   // Preselect the previously selected parameter if available
-  if (selectedParameter && parameters.includes(selectedParameter)) {
+  if (selectedParameter && allParameters.has(selectedParameter)) {
     parameterSelect.value = selectedParameter;
   } else {
-    selectedParameter = parameters[0];
+    selectedParameter = [...allParameters][0];
   }
 
   parameterSelect.onchange = () => {
@@ -134,6 +118,21 @@ async function displayDeviceDetails(details, source, selectedMonth, months) {
   };
 
   fetchAndDisplayDataForMonth(source, selectedMonth, parameterSelect.value);
+}
+
+function fetchAndDisplayDataForMonth(source, month, parameter) {
+  fetch(`/api/device-details?source=${source}&month=${month}`)
+    .then(response => response.json())
+    .then(details => {
+      if (!details || details.length === 0) {
+        throw new Error(`No details found for source: ${source} and month: ${month}`);
+      }
+      drawGraph(details, parameter);
+    })
+    .catch(error => {
+      console.error(error.message);
+      alert(error.message);
+    });
 }
 
 function drawGraph(data, parameter) {
@@ -172,12 +171,15 @@ function drawGraph(data, parameter) {
         x: {
           type: 'time',
           time: {
-            unit: 'minute',
-            tooltipFormat: 'll HH:mm'
+            unit: 'day'
           },
           title: {
             display: true,
             text: 'Timestamp'
+          },
+          ticks: {
+            // autoSkip: false,
+            source: 'data'
           }
         },
         y: {
