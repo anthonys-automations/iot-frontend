@@ -38,37 +38,37 @@ async function fetchDeviceDetails(source) {
     // Fetch months for the source first
     const months = await fetchMonthsForSource(source);
 
-    // Auto-select the last available month
-    const lastAvailableMonth = months[0]; // Assuming months are in descending order
+    // Determine which month to select
+    let monthToSelect = selectedMonth && months.includes(selectedMonth) ? selectedMonth : months[0];
 
-    if (!lastAvailableMonth) {
+    if (!monthToSelect) {
       throw new Error(`No months available for source: ${source}`);
     }
 
-    // Fetch details for the source and the last available month
-    const response = await fetch(`/api/device-details?source=${source}&month=${lastAvailableMonth}`);
+    // Fetch details for the source and the determined month
+    const response = await fetch(`/api/device-details?source=${source}&month=${monthToSelect}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch device details for source: ${source}`);
     }
     const details = await response.json();
     if (!details || details.length === 0) {
-      throw new Error(`No details found for source: ${source} and month: ${lastAvailableMonth}`);
+      throw new Error(`No details found for source: ${source} and month: ${monthToSelect}`);
     }
-    displayDeviceDetails(details, source, lastAvailableMonth, months);
+    displayDeviceDetails(details, source, monthToSelect, months);
   } catch (error) {
     console.error(error.message);
     alert(error.message);
   }
 }
 
-async function displayDeviceDetails(details, source, selectedMonth, months) {
+async function displayDeviceDetails(details, source, monthToSelect, months) {
   if (!details || details.length === 0) {
     console.error(`No details available to display for source: ${source}`);
     return;
   }
 
   const deviceInfo = document.getElementById('device-info');
-  deviceInfo.innerHTML = `<h2>Device: ${details[0].Properties.source}</h2>`;
+  deviceInfo.innerHTML = `<h2>Device: ${source}</h2>`;
 
   const parameterSelect = document.getElementById('parameter-select');
   parameterSelect.innerHTML = '';
@@ -98,8 +98,8 @@ async function displayDeviceDetails(details, source, selectedMonth, months) {
     monthSelect.appendChild(option);
   });
 
-  // Preselect the last available month or the previously selected month
-  monthSelect.value = selectedMonth;
+  // Preselect the determined month or the previously selected month
+  monthSelect.value = monthToSelect;
 
   // Preselect the previously selected parameter if available
   if (selectedParameter && allParameters.has(selectedParameter)) {
@@ -117,7 +117,7 @@ async function displayDeviceDetails(details, source, selectedMonth, months) {
     fetchAndDisplayDataForMonth(source, monthSelect.value, parameterSelect.value);
   };
 
-  fetchAndDisplayDataForMonth(source, selectedMonth, parameterSelect.value);
+  fetchAndDisplayDataForMonth(source, monthToSelect, parameterSelect.value);
 }
 
 function fetchAndDisplayDataForMonth(source, month, parameter) {
@@ -145,7 +145,7 @@ function drawGraph(data, parameter) {
   const ctx = canvas.getContext('2d');
   
   // Map the data to labels and values
-  const labels = data.map(item => new Date(item.SystemProperties["iothub-enqueuedtime"]));
+  const labels = data.map(item => new Date(item.timestamp));
   const values = data.map(item => Number(item.Body[parameter]));
 
   // Debug: Log the labels and values to ensure they are correct
@@ -191,7 +191,7 @@ function drawGraph(data, parameter) {
       },
       elements: {
         line: {
-          tension: 0.4 // Smooth the line
+          tension: 0.2 // Smooth the line
         }
       }
     }

@@ -22,7 +22,7 @@ class CosmosDBReader {
             console.log(`Fetching device sources from database: ${this.databaseId}, container: ${this.containerId}`);
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
-            const { resources: items } = await container.items.query('SELECT DISTINCT c.Properties.source FROM c ORDER BY c.Properties.source').fetchAll();
+            const { resources: items } = await container.items.query('SELECT DISTINCT c.source FROM c ORDER BY c.source').fetchAll();
             console.log(`Fetched device sources: ${JSON.stringify(items, null, 2)}`);
             return items;
         } catch (error) {
@@ -37,7 +37,7 @@ class CosmosDBReader {
           const database = this.client.database(this.databaseId);
           const container = database.container(this.containerId);
           const query = {
-            query: 'SELECT * FROM c WHERE c.Properties.source = @source AND c.month = @month',
+            query: 'SELECT c.timestamp,c.Body FROM c WHERE c.source = @source AND c.month = @month ORDER BY c.timestamp',
             parameters: [
               { name: '@source', value: source },
               { name: '@month', value: month }
@@ -56,7 +56,7 @@ class CosmosDBReader {
           const database = this.client.database(this.databaseId);
           const container = database.container(this.containerId);
           const query = {
-              query: 'SELECT DISTINCT c.month FROM c WHERE c.Properties.source = @source ORDER BY c.month DESC',
+              query: 'SELECT DISTINCT c.month FROM c WHERE c.source = @source ORDER BY c.month DESC',
               parameters: [{ name: '@source', value: source }]
           };
           const { resources: items } = await container.items.query(query).fetchAll();
