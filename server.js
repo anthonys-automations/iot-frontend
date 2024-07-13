@@ -5,7 +5,7 @@ const app = express();
 
 const cosmosEndpoint = process.env.CosmosEndpoint;
 const cosmosDatabaseId = process.env.CosmosDatabaseId;
-const cosmosContainerId = process.env.CosmosContainerId;
+const cosmosContainerId = "telemetry";
 
 console.log(`Starting server with Cosmos DB endpoint: ${cosmosEndpoint}, databaseId: ${cosmosDatabaseId}, containerId: ${cosmosContainerId}`);
 
