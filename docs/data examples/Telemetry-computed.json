@@ -1,0 +1,22 @@
+[
+    {
+        "name": "tsBody",
+        "query": "SELECT VALUE IIF(IS_DEFINED(c.Body.Utc), c.Body.Utc, c.SystemProperties[\"iothub-enqueuedtime\"]) FROM c"
+    },
+    {
+        "name": "timestamp",
+        "query": "SELECT VALUE c.SystemProperties[\"iothub-enqueuedtime\"] FROM c"
+    },
+    {
+        "name": "month",
+        "query": "SELECT VALUE RIGHT(c.deviceMonth, 7) FROM c"
+    },
+    {
+        "name": "source",
+        "query": "SELECT VALUE c.Properties.source FROM c"
+    },
+    {
+        "name": "deviceId",
+        "query": "SELECT VALUE c.SystemProperties[\"iothub-connection-device-id\"] FROM c"
+    }
+]
