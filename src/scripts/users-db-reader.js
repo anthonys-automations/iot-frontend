@@ -17,9 +17,27 @@ class UsersDBReader {
         });
         this.databaseId = databaseId;
         this.containerId = "users";
+
+        console.log(`Initializing UsersDBReader with endpoint: ${endpoint}, database: ${databaseId}, container: ${this.containerId}`);
+        
+        this.verifyContainer().catch(error => {
+            console.error('Failed to verify users container:', error);
+        });
+    }
+
+    async verifyContainer() {
+        try {
+            const database = this.client.database(this.databaseId);
+            const { resource: container } = await database.container(this.containerId).read();
+            console.log('Users container verified:', container.id);
+        } catch (error) {
+            console.error(`Users container not found or not accessible: ${error.message}`);
+            throw error;
+        }
     }
 
     async findUserByAuth(authType, authId) {
+        console.log(`Searching for user with authType: ${authType}, authId: ${authId}`);
         try {
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
@@ -31,6 +49,7 @@ class UsersDBReader {
                 ]
             };
             const { resources: items } = await container.items.query(query).fetchAll();
+            console.log(`Found ${items.length} matching users`);
             return items[0];
         } catch (error) {
             console.error(`Error finding user: ${error.message}`);
@@ -39,6 +58,7 @@ class UsersDBReader {
     }
 
     async createUser(realName, emailAddress, authType, authId) {
+        console.log(`Creating user with email: ${emailAddress}, authType: ${authType}`);
         try {
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
@@ -55,6 +75,7 @@ class UsersDBReader {
             };
 
             const { resource: createdUser } = await container.items.create(newUser);
+            console.log('User created successfully:', createdUser.id);
             return createdUser;
         } catch (error) {
             console.error(`Error creating user: ${error.message}`);
@@ -63,6 +84,7 @@ class UsersDBReader {
     }
 
     async addAuthMethod(userId, authType, authId) {
+        console.log(`Adding auth method to user ${userId}: ${authType}`);
         try {
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
@@ -79,6 +101,7 @@ class UsersDBReader {
             });
             
             const { resource: updatedUser } = await container.item(userId, userId).replace(user);
+            console.log('Auth method added successfully');
             return updatedUser;
         } catch (error) {
             console.error(`Error adding auth method: ${error.message}`);
