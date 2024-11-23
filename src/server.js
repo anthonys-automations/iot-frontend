@@ -51,7 +51,10 @@ app.get('/api/device-months', async (req, res) => {
 });
 
 app.get('/api/current-user', async (req, res) => {
-    // In production, you'd get these from Azure App Service auth
+    // Log environment variables to ensure they are set
+    console.log('AUTH_TYPE:', process.env.AUTH_TYPE);
+    console.log('AUTH_ID:', process.env.AUTH_ID);
+
     const authType = process.env.AUTH_TYPE || 'azure';
     const authId = process.env.AUTH_ID;
     
