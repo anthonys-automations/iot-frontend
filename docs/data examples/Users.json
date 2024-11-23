@@ -1,0 +1,12 @@
+{
+    "id": "uuid-1", // Single ID field serving both as document ID and user ID
+    "realName": "John Doe",
+    "emailAddress": "john@example.com",
+    "authMethods": [
+        {
+            "type": "azure",
+            "id": "azure-provided-id"
+        }
+    ],
+    "createdAt": "2024-03-21T10:30:00Z"
+}

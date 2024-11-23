@@ -1,6 +1,18 @@
+async function checkAuth() {
+    const response = await fetch('/api/current-user');
+    const data = await response.json();
+    
+    if (data.authenticated) {
+        const topBar = document.querySelector('.top-bar');
+        topBar.innerHTML = `Telemetry Dashboard - Hello ${data.user.realName || data.user.emailAddress}`;
+    } else if (data.authType && data.authId) {
+        window.location.href = `/signup.html?authType=${data.authType}&authId=${data.authId}`;
+    }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
-  fetchDevices();
+    checkAuth();
+    fetchDevices();
 });
 
 async function fetchDevices() {

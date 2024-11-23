@@ -11,6 +11,9 @@ console.log(`Starting server with Cosmos DB endpoint: ${cosmosEndpoint}, databas
 const CosmosDBReader = require('./scripts/cosmos-db-reader.js');
 const cosmosDBReader = new CosmosDBReader(cosmosEndpoint, cosmosDatabaseId, cosmosContainerId);
 
+const UsersDBReader = require('./scripts/users-db-reader.js');
+const usersDBReader = new UsersDBReader(cosmosEndpoint, cosmosDatabaseId);
+
 const path = require('path');
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -45,6 +48,42 @@ app.get('/api/device-months', async (req, res) => {
   const source = req.query.source;
   const months = await cosmosDBReader.getDistinctMonths(source);
   res.json(months);
+});
+
+app.get('/api/current-user', async (req, res) => {
+    // In production, you'd get these from Azure App Service auth
+    const authType = process.env.AUTH_TYPE || 'azure';
+    const authId = process.env.AUTH_ID;
+    
+    if (!authId) {
+        return res.json({ authenticated: false });
+    }
+
+    try {
+        const user = await usersDBReader.findUserByAuth(authType, authId);
+        if (user) {
+            res.json({ authenticated: true, user });
+        } else {
+            res.json({ authenticated: false, authType, authId });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/signup', express.json(), async (req, res) => {
+    const { realName, emailAddress, authType, authId } = req.body;
+    
+    if (!emailAddress) {
+        return res.status(400).json({ error: 'Email address is required' });
+    }
+
+    try {
+        const user = await usersDBReader.createUser(realName, emailAddress, authType, authId);
+        res.json({ success: true, user });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 const port = process.env.PORT || 3000;
