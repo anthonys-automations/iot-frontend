@@ -33,21 +33,46 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function fetchDevices() {
-  const response = await fetch('/api/devices');
-  const devices = await response.json();
-  displayDevices(devices);
+  try {
+    const response = await fetch('/api/devices');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch devices: ${response.status} ${response.statusText}`);
+    }
+    const devices = await response.json();
+    displayDevices(devices);
+  } catch (error) {
+    console.error('Error fetching devices:', error);
+    const deviceList = document.getElementById('device-list');
+    deviceList.innerHTML = `
+      <div class="error-message">
+        Unable to load devices. Please try again later.
+      </div>
+    `;
+  }
 }
 
 function displayDevices(devices) {
-  const deviceList = document.getElementById('device-list');
-  deviceList.innerHTML = '';
-  devices.forEach(device => {
+  try {
+    if (!devices || !Array.isArray(devices)) {
+      throw new Error('Invalid devices data received');
+    }
+
+    const deviceList = document.getElementById('device-list');
+    if (!deviceList) {
+      throw new Error('Device list element not found');
+    }
+
+    deviceList.innerHTML = '';
+    devices.forEach(device => {
       const div = document.createElement('div');
       div.className = 'device-item';
-      div.textContent = device.source;
+      div.textContent = device.source || 'Unknown device';
       div.onclick = () => fetchDeviceDetails(device.source);
       deviceList.appendChild(div);
-  });
+    });
+  } catch (error) {
+    console.error('Error displaying devices:', error);
+  }
 }
 
 async function fetchMonthsForSource(source) {
