@@ -58,8 +58,13 @@ app.get('/api/current-user', async (req, res) => {
     const authType = process.env.AUTH_TYPE || 'azure';
     const authId = process.env.AUTH_ID;
     
+    // If no authId, return early with authentication failed
     if (!authId) {
-        return res.json({ authenticated: false });
+        return res.json({ 
+            authenticated: false,
+            authType: authType,  // Include these even when not authenticated
+            authId: authId
+        });
     }
 
     try {
@@ -67,9 +72,15 @@ app.get('/api/current-user', async (req, res) => {
         if (user) {
             res.json({ authenticated: true, user });
         } else {
-            res.json({ authenticated: false, authType, authId });
+            // When no user found, still return the auth info
+            res.json({ 
+                authenticated: false, 
+                authType, 
+                authId 
+            });
         }
     } catch (error) {
+        console.error('Error in /api/current-user:', error);
         res.status(500).json({ error: error.message });
     }
 });
