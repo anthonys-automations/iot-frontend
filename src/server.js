@@ -51,28 +51,39 @@ app.get('/api/device-months', async (req, res) => {
 });
 
 app.get('/api/current-user', async (req, res) => {
-    // Log environment variables to ensure they are set
-    console.log('AUTH_TYPE:', process.env.AUTH_TYPE);
-    console.log('AUTH_ID:', process.env.AUTH_ID);
-
-    const authType = process.env.AUTH_TYPE || 'azure';
-    const authId = process.env.AUTH_ID;
+    // Extract Azure AD claims from headers
+    const clientPrincipal = req.headers['x-ms-client-principal'];
     
-    // If no authId, return early with authentication failed
-    if (!authId) {
+    if (!clientPrincipal) {
+        console.log('No client principal found in headers');
         return res.json({ 
             authenticated: false,
-            authType: authType,  // Include these even when not authenticated
-            authId: authId
+            authType: 'azure'
         });
     }
 
     try {
+        // Decode the client principal (it's base64 encoded)
+        const principal = JSON.parse(Buffer.from(clientPrincipal, 'base64').toString('ascii'));
+        
+        console.log('Decoded principal:', principal);
+        
+        // The userId is in the claims
+        const authId = principal.userId;
+        const authType = 'azure';
+
+        if (!authId) {
+            return res.json({ 
+                authenticated: false,
+                authType
+            });
+        }
+
         const user = await usersDBReader.findUserByAuth(authType, authId);
         if (user) {
             res.json({ authenticated: true, user });
         } else {
-            // When no user found, still return the auth info
+            // When no user found, return auth info for signup
             res.json({ 
                 authenticated: false, 
                 authType, 
@@ -80,7 +91,7 @@ app.get('/api/current-user', async (req, res) => {
             });
         }
     } catch (error) {
-        console.error('Error in /api/current-user:', error);
+        console.error('Error processing authentication:', error);
         res.status(500).json({ error: error.message });
     }
 });
