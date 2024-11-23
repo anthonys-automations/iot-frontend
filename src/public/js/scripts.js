@@ -1,14 +1,20 @@
 async function checkAuth() {
-    const response = await fetch('/api/current-user');
-    const data = await response.json();
-    
-    console.log('Auth check response:', data);
+    try {
+        const response = await fetch('/api/current-user');
+        const data = await response.json();
+        
+        console.log('Auth check response:', data);
 
-    if (data.authenticated) {
-        const topBar = document.querySelector('.top-bar');
-        topBar.innerHTML = `Telemetry Dashboard - Hello ${data.user.realName || data.user.emailAddress}`;
-    } else if (data.authType && data.authId) {
-        window.location.href = `/signup.html?authType=${data.authType}&authId=${data.authId}`;
+        if (data.authenticated) {
+            const topBar = document.querySelector('.top-bar');
+            topBar.innerHTML = `Telemetry Dashboard - Hello ${data.user.realName || data.user.emailAddress}`;
+        } else if (data.authId) {
+            window.location.href = `/signup.html?authType=${data.authType}&authId=${data.authId}`;
+        } else {
+            console.log('No authentication credentials found');
+        }
+    } catch (error) {
+        console.error('Error checking authentication:', error);
     }
 }
 
