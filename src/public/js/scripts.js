@@ -12,10 +12,15 @@ async function checkAuth() {
             topBar.innerHTML = `Telemetry Dashboard - Hello ${data.user.realName || data.user.emailAddress}`;
         } else if (data.authId) {
             console.log('User needs to sign up, redirecting...');
-            window.location.href = `/signup.html?authType=${data.authType}&authId=${data.authId}`;
+            const params = new URLSearchParams({
+                authType: data.authType,
+                authId: data.authId,
+                email: data.suggestedEmail || '',
+                name: data.suggestedName || ''
+            });
+            window.location.href = `/signup.html?${params.toString()}`;
         } else {
             console.log('No authentication credentials found');
-            // Optionally redirect to login page or show login button
         }
     } catch (error) {
         console.error('Error checking authentication:', error);

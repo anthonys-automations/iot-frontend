@@ -51,7 +51,6 @@ app.get('/api/device-months', async (req, res) => {
 });
 
 app.get('/api/current-user', async (req, res) => {
-    // Extract Azure AD claims from headers
     const clientPrincipal = req.headers['x-ms-client-principal'];
     
     if (!clientPrincipal) {
@@ -63,14 +62,26 @@ app.get('/api/current-user', async (req, res) => {
     }
 
     try {
-        // Decode the client principal (it's base64 encoded)
         const principal = JSON.parse(Buffer.from(clientPrincipal, 'base64').toString('ascii'));
-        
         console.log('Decoded principal:', principal);
         
-        // The userId is in the claims
-        const authId = principal.userId;
+        // Extract user information from claims
+        const objectIdClaim = principal.claims.find(
+            claim => claim.typ === 'http://schemas.microsoft.com/identity/claims/objectidentifier'
+        );
+        const emailClaim = principal.claims.find(
+            claim => claim.typ === 'preferred_username'
+        );
+        const nameClaim = principal.claims.find(
+            claim => claim.typ === 'name'
+        );
+
+        const authId = objectIdClaim?.val;
         const authType = 'azure';
+        const email = emailClaim?.val;
+        const name = nameClaim?.val;
+
+        console.log('Extracted user info:', { authId, email, name });
 
         if (!authId) {
             return res.json({ 
@@ -83,11 +94,13 @@ app.get('/api/current-user', async (req, res) => {
         if (user) {
             res.json({ authenticated: true, user });
         } else {
-            // When no user found, return auth info for signup
+            // When no user found, return auth info and additional user info for signup
             res.json({ 
                 authenticated: false, 
                 authType, 
-                authId 
+                authId,
+                suggestedEmail: email,
+                suggestedName: name
             });
         }
     } catch (error) {

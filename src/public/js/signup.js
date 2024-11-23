@@ -1,3 +1,15 @@
+document.addEventListener('DOMContentLoaded', () => {
+    // Pre-fill form with suggested values from URL parameters
+    const params = new URLSearchParams(window.location.search);
+    
+    if (params.get('name')) {
+        document.getElementById('realName').value = params.get('name');
+    }
+    if (params.get('email')) {
+        document.getElementById('emailAddress').value = params.get('email');
+    }
+});
+
 document.getElementById('signup-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -18,7 +30,8 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
         });
 
         if (!response.ok) {
-            throw new Error('Signup failed');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Signup failed');
         }
 
         window.location.href = '/';
