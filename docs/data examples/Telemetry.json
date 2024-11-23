@@ -1,0 +1,29 @@
+{
+    "id": "126ab9a4-1913-4a12-b566-8c1887b165e0",
+    "deviceMonth": "verik-84:CC:A8:9D:AF:88-2024-07",
+    "Properties": {
+        "source": "verik-84:CC:A8:9D:AF:88"
+    },
+    "SystemProperties": {
+        "iothub-connection-device-id": "verik-84:CC:A8:9D:AF:88",
+        "iothub-connection-auth-method": "{\"scope\":\"device\",\"type\":\"sas\",\"issuer\":\"iothub\"}",
+        "iothub-connection-auth-generation-id": "638563120788553649",
+        "iothub-content-type": "application/json",
+        "iothub-content-encoding": "utf-8",
+        "iothub-enqueuedtime": "2024-07-12T01:53:57.1980000Z",
+        "iothub-message-source": "Telemetry"
+    },
+    "iothub-name": "Verik-Free-IoT",
+    "Body": {
+        "battery voltage": "5.02",
+        "uptime": "7",
+        "wifi status": "3",
+        "wifi signal": "-64",
+        "Utc": "2024-07-12T01:53:56"
+    },
+    "_rid": "hVojAM8zMBQBAAAAAAAAAA==",
+    "_self": "dbs/hVojAA==/colls/hVojAM8zMBQ=/docs/hVojAM8zMBQBAAAAAAAAAA==/",
+    "_etag": "\"00009b35-0000-0a00-0000-66908cb50000\"",
+    "_attachments": "attachments/",
+    "_ts": 1720749237
+}
