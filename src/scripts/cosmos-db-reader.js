@@ -71,10 +71,11 @@ class CosmosDBReader {
 
     async getDeviceParameters(source) {
         try {
+            console.log(`Fetching parameters for source: ${source}`);
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
             const query = {
-                query: 'SELECT DISTINCT VALUE k FROM c JOIN k IN OBJECT_KEYS(c.Body) WHERE c.source = @source',
+                query: 'SELECT DISTINCT VALUE k FROM c JOIN k IN OBJECT_KEYS(c.Body) WHERE c.Properties.source = @source',
                 parameters: [{ name: '@source', value: source }]
             };
             const { resources: parameters } = await container.items.query(query).fetchAll();
