@@ -9,7 +9,7 @@ async function checkAuth() {
         if (data.authenticated) {
             console.log('User is authenticated:', data.user);
             const topBar = document.querySelector('.top-bar');
-            topBar.innerHTML = `Telemetry Dashboard - Hello ${data.user.realName || data.user.emailAddress}`;
+            topBar.innerHTML = `Telemetry Dashboard - Hello ${sanitizeHTML(data.user.realName || data.user.emailAddress)}`;
         } else if (data.authId) {
             console.log('User needs to sign up, redirecting...');
             const params = new URLSearchParams({
@@ -243,10 +243,6 @@ function drawZoomableGraph(data, parameter, source) {
     
     // Add function to update view without using zoom plugin
     async function updateViewRange(newStart, newEnd) {
-        // Disable zoom plugin temporarily
-        chart.options.plugins.zoom.zoom.wheel.enabled = false;
-        chart.options.plugins.zoom.pan.enabled = false;
-
         // Update the view
         chart.options.scales.x.min = newStart;
         chart.options.scales.x.max = newEnd;
@@ -254,34 +250,11 @@ function drawZoomableGraph(data, parameter, source) {
         
         // Fetch and update data
         await fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
-
-        // Re-enable zoom plugin
-        chart.options.plugins.zoom.zoom.wheel.enabled = true;
-        chart.options.plugins.zoom.pan.enabled = true;
         chart.update('none');
     }
-
-    // Function to enable zoom and pan
-    function enableZoomPan() {
-        chart.options.plugins.zoom.zoom.wheel.enabled = true;
-        chart.options.plugins.zoom.pan.enabled = true;
-        chart.update('none');
-    }
-
-    // Function to disable zoom and pan
-    function disableZoomPan() {
-        chart.options.plugins.zoom.zoom.wheel.enabled = false;
-        chart.options.plugins.zoom.pan.enabled = false;
-        chart.update('none');
-    }
-
-    // Add mouse enter/leave handlers for the canvas
-    canvas.addEventListener('mouseenter', enableZoomPan);
-    canvas.addEventListener('mouseleave', disableZoomPan);
 
     // Update button handlers to use direct scale manipulation
     document.getElementById('zoomIn').addEventListener('click', () => {
-        disableZoomPan(); // Disable during button interaction
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
@@ -290,11 +263,9 @@ function drawZoomableGraph(data, parameter, source) {
         const newStart = new Date(center.getTime() - newRange / 2);
         const newEnd = new Date(center.getTime() + newRange / 2);
         updateViewRange(newStart, newEnd);
-        enableZoomPan(); // Re-enable after interaction
     });
 
     document.getElementById('zoomOut').addEventListener('click', () => {
-        disableZoomPan(); // Disable during button interaction
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
@@ -303,11 +274,9 @@ function drawZoomableGraph(data, parameter, source) {
         const newStart = new Date(center.getTime() - newRange / 2);
         const newEnd = new Date(center.getTime() + newRange / 2);
         updateViewRange(newStart, newEnd);
-        enableZoomPan(); // Re-enable after interaction
     });
 
     document.getElementById('moveLeft').addEventListener('click', () => {
-        disableZoomPan(); // Disable during button interaction
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
@@ -315,11 +284,9 @@ function drawZoomableGraph(data, parameter, source) {
         const newStart = new Date(currentMin.getTime() - moveAmount);
         const newEnd = new Date(currentMax.getTime() - moveAmount);
         updateViewRange(newStart, newEnd);
-        enableZoomPan(); // Re-enable after interaction
     });
 
     document.getElementById('moveRight').addEventListener('click', () => {
-        disableZoomPan(); // Disable during button interaction
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
@@ -327,7 +294,6 @@ function drawZoomableGraph(data, parameter, source) {
         const newStart = new Date(currentMin.getTime() + moveAmount);
         const newEnd = new Date(currentMax.getTime() + moveAmount);
         updateViewRange(newStart, newEnd);
-        enableZoomPan(); // Re-enable after interaction
     });
 
     // Update the zoom plugin configuration
@@ -350,7 +316,7 @@ function drawZoomableGraph(data, parameter, source) {
                         mode: 'x',
                         onZoomComplete: async function(ctx) {
                             const {min, max} = ctx.chart.scales.x;
-                            await fetchNewDataForRange(new Date(min), new Date(max), source, parameter, chart);
+                            await updateViewRange(new Date(min), new Date(max));
                         }
                     },
                     pan: {
@@ -359,7 +325,7 @@ function drawZoomableGraph(data, parameter, source) {
                         threshold: 10,
                         onPanComplete: async function(ctx) {
                             const {min, max} = ctx.chart.scales.x;
-                            await fetchNewDataForRange(new Date(min), new Date(max), source, parameter, chart);
+                            await updateViewRange(new Date(min), new Date(max));
                         }
                     }
                 }
@@ -374,7 +340,7 @@ function drawZoomableGraph(data, parameter, source) {
                         }
                     },
                     title: {
-                        display: true,
+                        display: false,
                         text: 'Time'
                     }
                 },
