@@ -107,3 +107,35 @@ button[type="submit"]:hover {
 .parameter-item:hover {
     background-color: #e2e8f0;
 }
+
+.graph-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.zoom-controls, .time-range-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.graph-controls button {
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.graph-controls button:hover {
+    background-color: #f0f0f0;
+}
+
+.graph-controls select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}

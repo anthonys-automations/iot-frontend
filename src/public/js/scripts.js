@@ -135,16 +135,40 @@ async function displayParameterGraph(source, parameter) {
         deviceInfo.innerHTML = `<h2>${source} - ${parameter}</h2>`;
         
         // Draw the graph with the processed data
-        drawZoomableGraph(data, parameter);
+        drawZoomableGraph(data, parameter, source);
     } catch (error) {
         console.error('Error displaying parameter graph:', error);
         alert(`Error loading graph: ${error.message}`);
     }
 }
 
-function drawZoomableGraph(data, parameter) {
+function drawZoomableGraph(data, parameter, source) {
     const graphContainer = document.getElementById('graph');
     graphContainer.innerHTML = '';
+
+    // Add control buttons container
+    const controlsDiv = document.createElement('div');
+    controlsDiv.className = 'graph-controls';
+    graphContainer.appendChild(controlsDiv);
+
+    // Add zoom controls
+    controlsDiv.innerHTML = `
+        <div class="zoom-controls">
+            <button id="zoomIn">+</button>
+            <button id="zoomOut">-</button>
+            <button id="resetZoom">Reset</button>
+        </div>
+        <div class="time-range-controls">
+            <button id="move1DayLeft">← 1d</button>
+            <button id="move1DayRight">1d →</button>
+            <select id="timeRangeSelect">
+                <option value="24">24 hours</option>
+                <option value="168">1 week</option>
+                <option value="720" selected>1 month</option>
+                <option value="2160">3 months</option>
+            </select>
+        </div>
+    `;
 
     const canvas = document.createElement('canvas');
     graphContainer.appendChild(canvas);
@@ -156,7 +180,6 @@ function drawZoomableGraph(data, parameter) {
         labels: data.map(item => new Date(item.timestamp || item.SystemProperties['iothub-enqueuedtime'])),
         datasets: [{
             label: parameter,
-            // Convert string values to numbers and handle any potential non-numeric values
             data: data.map(item => {
                 const value = item.Body[parameter];
                 return isNaN(parseFloat(value)) ? null : parseFloat(value);
@@ -169,8 +192,10 @@ function drawZoomableGraph(data, parameter) {
         }]
     };
 
-    // Create chart with zoom plugin
-    new Chart(ctx, {
+    let currentStartTime = new Date(Math.min(...chartData.labels));
+    let currentEndTime = new Date(Math.max(...chartData.labels));
+    
+    const chart = new Chart(ctx, {
         type: 'line',
         data: chartData,
         options: {
@@ -180,11 +205,18 @@ function drawZoomableGraph(data, parameter) {
                     zoom: {
                         wheel: {
                             enabled: true,
+                            mode: 'x' // Only zoom horizontally
                         },
                         pinch: {
-                            enabled: true
+                            enabled: true,
+                            mode: 'x' // Only zoom horizontally
                         },
-                        mode: 'xy'
+                        mode: 'x',
+                        onZoomComplete: async function(ctx) {
+                            // Get the new time range after zooming
+                            const {min, max} = ctx.chart.scales.x;
+                            await fetchNewDataForRange(new Date(min), new Date(max), source, parameter, chart);
+                        }
                     },
                     pan: {
                         enabled: true,
