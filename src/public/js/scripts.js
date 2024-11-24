@@ -299,10 +299,18 @@ function drawZoomableGraph(data, parameter, source) {
         }
     });
 
-    // Add event listeners for controls
+    // Add function to reset zoom state
+    function resetZoomState() {
+        if (chart.getZoomLevel) {  // Reset the zoom plugin state
+            chart.resetZoom();
+        }
+    }
+
+    // Update button handlers to reset zoom state
     document.getElementById('zoomIn').addEventListener('click', () => {
+        resetZoomState();  // Reset zoom state before applying new range
         const range = currentEndTime - currentStartTime;
-        const newRange = range * 0.7; // Reduce range by 30%
+        const newRange = range * 0.7;
         const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
         const newStart = new Date(center.getTime() - newRange / 2);
         const newEnd = new Date(center.getTime() + newRange / 2);
@@ -310,8 +318,9 @@ function drawZoomableGraph(data, parameter, source) {
     });
 
     document.getElementById('zoomOut').addEventListener('click', () => {
+        resetZoomState();  // Reset zoom state before applying new range
         const range = currentEndTime - currentStartTime;
-        const newRange = range * 1.3; // Increase range by 30%
+        const newRange = range * 1.3;
         const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
         const newStart = new Date(center.getTime() - newRange / 2);
         const newEnd = new Date(center.getTime() + newRange / 2);
@@ -319,16 +328,18 @@ function drawZoomableGraph(data, parameter, source) {
     });
 
     document.getElementById('moveLeft').addEventListener('click', () => {
+        resetZoomState();  // Reset zoom state before moving
         const range = currentEndTime - currentStartTime;
-        const moveAmount = range * 0.3; // Move by 30% of current range
+        const moveAmount = range * 0.3;
         const newStart = new Date(currentStartTime.getTime() - moveAmount);
         const newEnd = new Date(currentEndTime.getTime() - moveAmount);
         fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
     });
 
     document.getElementById('moveRight').addEventListener('click', () => {
+        resetZoomState();  // Reset zoom state before moving
         const range = currentEndTime - currentStartTime;
-        const moveAmount = range * 0.3; // Move by 30% of current range
+        const moveAmount = range * 0.3;
         const newStart = new Date(currentStartTime.getTime() + moveAmount);
         const newEnd = new Date(currentEndTime.getTime() + moveAmount);
         fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
