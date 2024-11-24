@@ -74,12 +74,29 @@ class CosmosDBReader {
             console.log(`Fetching parameters for source: ${source}`);
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
+
             const query = {
-                query: 'SELECT DISTINCT VALUE k FROM c JOIN k IN OBJECT_KEYS(c.Body) WHERE c.Properties.source = @source',
+                query: 'SELECT c.Body FROM c WHERE c.Properties.source = @source',
                 parameters: [{ name: '@source', value: source }]
             };
-            const { resources: parameters } = await container.items.query(query).fetchAll();
+
+            const { resources } = await container.items.query(query).fetchAll();
+            
+            const parameterSet = new Set();
+            resources.forEach(item => {
+                if (item.Body) {
+                    Object.keys(item.Body).forEach(key => {
+                        if (key !== 'Utc') {
+                            parameterSet.add(key);
+                        }
+                    });
+                }
+            });
+
+            const parameters = Array.from(parameterSet).sort();
+            console.log('Found parameters:', parameters);
             return parameters;
+
         } catch (error) {
             console.error(`Error fetching parameters for source ${source}: ${error.message}`);
             throw error;
