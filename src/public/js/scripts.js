@@ -284,6 +284,55 @@ function drawZoomableGraph(data, parameter, source) {
             }
         }
     });
+
+    // Add event listeners for controls
+    document.getElementById('zoomIn').addEventListener('click', () => {
+        const range = currentEndTime - currentStartTime;
+        const newRange = range / 2;
+        const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
+        const newStart = new Date(center.getTime() - newRange / 2);
+        const newEnd = new Date(center.getTime() + newRange / 2);
+        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
+    });
+
+    document.getElementById('zoomOut').addEventListener('click', () => {
+        const range = currentEndTime - currentStartTime;
+        const newRange = range * 2;
+        const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
+        const newStart = new Date(center.getTime() - newRange / 2);
+        const newEnd = new Date(center.getTime() + newRange / 2);
+        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
+    });
+
+    document.getElementById('resetZoom').addEventListener('click', () => {
+        const end = new Date();
+        const start = new Date();
+        start.setMonth(start.getMonth() - 1);
+        fetchNewDataForRange(start, end, source, parameter, chart);
+    });
+
+    document.getElementById('move1DayLeft').addEventListener('click', () => {
+        const range = currentEndTime - currentStartTime;
+        const newStart = new Date(currentStartTime.getTime() - 24 * 60 * 60 * 1000);
+        const newEnd = new Date(newStart.getTime() + range);
+        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
+    });
+
+    document.getElementById('move1DayRight').addEventListener('click', () => {
+        const range = currentEndTime - currentStartTime;
+        const newEnd = new Date(currentEndTime.getTime() + 24 * 60 * 60 * 1000);
+        const newStart = new Date(newEnd.getTime() - range);
+        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
+    });
+
+    document.getElementById('timeRangeSelect').addEventListener('change', () => {
+        const range = currentEndTime - currentStartTime;
+        const newRange = range * document.getElementById('timeRangeSelect').value;
+        const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
+        const newStart = new Date(center.getTime() - newRange / 2);
+        const newEnd = new Date(center.getTime() + newRange / 2);
+        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
+    });
 }
 
 async function fetchMonthsForSource(source) {

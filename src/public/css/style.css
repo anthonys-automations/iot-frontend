@@ -134,6 +134,16 @@ button[type="submit"]:hover {
     background-color: #f0f0f0;
 }
 
+.graph-controls button:active {
+    background-color: #e0e0e0;
+    transform: translateY(1px);
+}
+
+.graph-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .graph-controls select {
     padding: 0.5rem;
     border: 1px solid #ddd;
