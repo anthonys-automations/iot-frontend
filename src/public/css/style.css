@@ -110,42 +110,31 @@ button[type="submit"]:hover {
 
 .graph-controls {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     margin-bottom: 1rem;
     padding: 0.5rem;
-    background-color: #f5f5f5;
-    border-radius: 4px;
 }
 
-.zoom-controls, .time-range-controls {
+.graph-buttons {
     display: flex;
     gap: 0.5rem;
 }
 
-.graph-controls button {
+.graph-buttons button {
     padding: 0.5rem 1rem;
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
     cursor: pointer;
+    min-width: 40px;
+    font-size: 1.2rem;
 }
 
-.graph-controls button:hover {
+.graph-buttons button:hover {
     background-color: #f0f0f0;
 }
 
-.graph-controls button:active {
+.graph-buttons button:active {
     background-color: #e0e0e0;
     transform: translateY(1px);
-}
-
-.graph-controls button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.graph-controls select {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
 }

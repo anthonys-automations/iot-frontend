@@ -201,19 +201,16 @@ function drawZoomableGraph(data, parameter, source) {
     const graphContainer = document.getElementById('graph');
     graphContainer.innerHTML = '';
 
-    // Simplified controls
+    // Simplified controls with just zoom and move buttons
     const controlsDiv = document.createElement('div');
     controlsDiv.className = 'graph-controls';
     graphContainer.appendChild(controlsDiv);
 
     controlsDiv.innerHTML = `
-        <div class="time-range-controls">
+        <div class="graph-buttons">
             <button id="moveLeft">←</button>
-            <select id="timeRangeSelect">
-                <option value="168">1 week</option>
-                <option value="720" selected>1 month</option>
-                <option value="2160">3 months</option>
-            </select>
+            <button id="zoomOut">−</button>
+            <button id="zoomIn">+</button>
             <button id="moveRight">→</button>
         </div>
     `;
@@ -302,35 +299,39 @@ function drawZoomableGraph(data, parameter, source) {
         }
     });
 
-    // Function to get movement interval based on current time range
-    function getMovementInterval() {
-        const timeRangeHours = parseInt(document.getElementById('timeRangeSelect').value);
-        if (timeRangeHours >= 2160) return 30 * 24 * 60 * 60 * 1000; // 1 month for 3-month view
-        if (timeRangeHours >= 720) return 7 * 24 * 60 * 60 * 1000;  // 1 week for 1-month view
-        return 24 * 60 * 60 * 1000; // 1 day for 1-week view
-    }
+    // Add event listeners for controls
+    document.getElementById('zoomIn').addEventListener('click', () => {
+        const range = currentEndTime - currentStartTime;
+        const newRange = range * 0.7; // Reduce range by 30%
+        const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
+        const newStart = new Date(center.getTime() - newRange / 2);
+        const newEnd = new Date(center.getTime() + newRange / 2);
+        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
+    });
+
+    document.getElementById('zoomOut').addEventListener('click', () => {
+        const range = currentEndTime - currentStartTime;
+        const newRange = range * 1.3; // Increase range by 30%
+        const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
+        const newStart = new Date(center.getTime() - newRange / 2);
+        const newEnd = new Date(center.getTime() + newRange / 2);
+        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
+    });
 
     document.getElementById('moveLeft').addEventListener('click', () => {
-        const interval = getMovementInterval();
         const range = currentEndTime - currentStartTime;
-        const newStart = new Date(currentStartTime.getTime() - interval);
-        const newEnd = new Date(newStart.getTime() + range);
+        const moveAmount = range * 0.3; // Move by 30% of current range
+        const newStart = new Date(currentStartTime.getTime() - moveAmount);
+        const newEnd = new Date(currentEndTime.getTime() - moveAmount);
         fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
     });
 
     document.getElementById('moveRight').addEventListener('click', () => {
-        const interval = getMovementInterval();
         const range = currentEndTime - currentStartTime;
-        const newEnd = new Date(currentEndTime.getTime() + interval);
-        const newStart = new Date(newEnd.getTime() - range);
+        const moveAmount = range * 0.3; // Move by 30% of current range
+        const newStart = new Date(currentStartTime.getTime() + moveAmount);
+        const newEnd = new Date(currentEndTime.getTime() + moveAmount);
         fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
-    });
-
-    document.getElementById('timeRangeSelect').addEventListener('change', (e) => {
-        const hours = parseInt(e.target.value);
-        const end = new Date();
-        const start = new Date(end - (hours * 60 * 60 * 1000));
-        fetchNewDataForRange(start, end, source, parameter, chart);
     });
 
     return chart;
