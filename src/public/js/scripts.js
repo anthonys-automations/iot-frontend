@@ -108,12 +108,10 @@ function sanitizeHTML(str) {
 
 async function displayParameterGraph(source, parameter) {
     try {
-        // Calculate default time range (1 month back from now)
         const endTime = new Date();
         const startTime = new Date();
         startTime.setMonth(startTime.getMonth() - 1);
         
-        // Fetch data with the correct query
         const response = await fetch(
             `/api/device-details?` + new URLSearchParams({
                 source: source,
@@ -128,18 +126,63 @@ async function displayParameterGraph(source, parameter) {
         }
         
         const data = await response.json();
-        console.log('Fetched data:', data); // Debug log
         
-        // Update graph title
         const deviceInfo = document.getElementById('device-info');
         deviceInfo.innerHTML = `<h2>${source} - ${parameter}</h2>`;
         
-        // Draw the graph with the processed data
         drawZoomableGraph(data, parameter, source);
     } catch (error) {
         console.error('Error displaying parameter graph:', error);
         alert(`Error loading graph: ${error.message}`);
     }
+}
+
+// Move these variables to the global scope
+let currentStartTime, currentEndTime;
+
+// Move the fetch function outside drawZoomableGraph
+async function fetchNewDataForRange(start, end, source, parameter, chart) {
+    // Clear any pending fetch
+    if (window.fetchTimeout) {
+        clearTimeout(window.fetchTimeout);
+    }
+
+    // Wait for 500ms of no changes before fetching
+    window.fetchTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch(
+                `/api/device-details?` + new URLSearchParams({
+                    source: source,
+                    parameter: parameter,
+                    startTime: start.toISOString(),
+                    endTime: end.toISOString()
+                })
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            // Update chart with new data
+            chart.data.labels = data.map(item => 
+                new Date(item.timestamp || item.SystemProperties['iothub-enqueuedtime'])
+            );
+            chart.data.datasets[0].data = data.map(item => {
+                const value = item.Body[parameter];
+                return isNaN(parseFloat(value)) ? null : parseFloat(value);
+            });
+            
+            chart.update('none'); // Update without animation
+            
+            // Update current time range
+            currentStartTime = start;
+            currentEndTime = end;
+        } catch (error) {
+            console.error('Error fetching new data:', error);
+        }
+    }, 500);
 }
 
 function drawZoomableGraph(data, parameter, source) {
@@ -192,8 +235,9 @@ function drawZoomableGraph(data, parameter, source) {
         }]
     };
 
-    let currentStartTime = new Date(Math.min(...chartData.labels));
-    let currentEndTime = new Date(Math.max(...chartData.labels));
+    // Initialize the time range
+    currentStartTime = new Date(Math.min(...chartData.labels));
+    currentEndTime = new Date(Math.max(...chartData.labels));
     
     const chart = new Chart(ctx, {
         type: 'line',
