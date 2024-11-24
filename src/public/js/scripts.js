@@ -243,16 +243,36 @@ function drawZoomableGraph(data, parameter, source) {
     
     // Add function to update view without using zoom plugin
     async function updateViewRange(newStart, newEnd) {
-        // Directly set the scale limits
+        // Disable zoom plugin temporarily
+        chart.options.plugins.zoom.zoom.wheel.enabled = false;
+        chart.options.plugins.zoom.pan.enabled = false;
+
+        // Update the view
         chart.options.scales.x.min = newStart;
         chart.options.scales.x.max = newEnd;
-        
-        // Update the chart first to show the new range
         chart.update('none');
         
-        // Then fetch new data for this range
+        // Fetch and update data
         await fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
+
+        // Re-enable zoom plugin
+        chart.options.plugins.zoom.zoom.wheel.enabled = true;
+        chart.options.plugins.zoom.pan.enabled = true;
+        chart.update('none');
     }
+
+    // Add mouse enter/leave handlers for the canvas
+    canvas.addEventListener('mouseenter', () => {
+        chart.options.plugins.zoom.zoom.wheel.enabled = true;
+        chart.options.plugins.zoom.pan.enabled = true;
+        chart.update('none');
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        chart.options.plugins.zoom.zoom.wheel.enabled = false;
+        chart.options.plugins.zoom.pan.enabled = false;
+        chart.update('none');
+    });
 
     // Update button handlers to use direct scale manipulation
     document.getElementById('zoomIn').addEventListener('click', () => {
