@@ -37,16 +37,34 @@ class CosmosDBReader {
         try {
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
+            
+            // Convert string dates to ISO format if they aren't already
+            const start = new Date(startTime).toISOString();
+            const end = new Date(endTime).toISOString();
+            
             const query = {
-                query: 'SELECT c.timestamp, c.Body FROM c WHERE c.source = @source AND c.timestamp >= @startTime AND c.timestamp <= @endTime ORDER BY c.timestamp',
+                query: `
+                    SELECT 
+                        c.SystemProperties["iothub-enqueuedtime"] as timestamp,
+                        c.Body
+                    FROM c 
+                    WHERE 
+                        c.Properties.source = @source 
+                        AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime 
+                        AND c.SystemProperties["iothub-enqueuedtime"] <= @endTime
+                    ORDER BY c.SystemProperties["iothub-enqueuedtime"] ASC
+                `,
                 parameters: [
                     { name: '@source', value: source },
-                    { name: '@startTime', value: startTime },
-                    { name: '@endTime', value: endTime }
+                    { name: '@startTime', value: start },
+                    { name: '@endTime', value: end }
                 ]
             };
+            
             const { resources: items } = await container.items.query(query).fetchAll();
+            console.log(`Found ${items.length} data points for ${source}`); // Debug log
             return items;
+            
         } catch (error) {
             console.error(`Error fetching details: ${error.message}`);
             throw error;

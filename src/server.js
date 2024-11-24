@@ -29,19 +29,14 @@ app.get('/api/devices', async (req, res) => {
 });
 
 app.get('/api/device-details', async (req, res) => {
-  const source = req.query.source;
-  const month = req.query.month;
-  try {
-    console.log(`Fetching device details for source: ${source} and month: ${month}`);
-    const details = await cosmosDBReader.getDeviceDetails(source, month);
-    if (!details || details.length === 0) {
-      console.error(`No details found for source: ${source} and month: ${month}`);
+    try {
+        const { source, parameter, startTime, endTime } = req.query;
+        const data = await cosmosDBReader.getDeviceDetails(source, parameter, startTime, endTime);
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching device details:', error);
+        res.status(500).json({ error: error.message });
     }
-    res.json(details);
-  } catch (error) {
-    console.error(`Error fetching details for source: ${source} and month: ${month} - ${error.message}`);
-    res.status(500).json({ error: error.message });
-  }
 });
 
 app.get('/api/device-months', async (req, res) => {

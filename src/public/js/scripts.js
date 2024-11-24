@@ -113,20 +113,28 @@ async function displayParameterGraph(source, parameter) {
         const startTime = new Date();
         startTime.setMonth(startTime.getMonth() - 1);
         
-        // Fetch data for the selected time range
+        // Fetch data with the correct query
         const response = await fetch(
-            `/api/device-details?source=${source}&parameter=${parameter}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}`
+            `/api/device-details?` + new URLSearchParams({
+                source: source,
+                parameter: parameter,
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString()
+            })
         );
-        const data = await response.json();
-        if (!Array.isArray(data)) {
-            throw new Error('Invalid data format received');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Sanitize dynamic content
-        const deviceInfo = document.getElementById('device-info');
-        deviceInfo.innerHTML = `<h2>${sanitizeHTML(source)} - ${sanitizeHTML(parameter)}</h2>`;
+        const data = await response.json();
+        console.log('Fetched data:', data); // Debug log
         
-        // Draw the graph with zoom capabilities
+        // Update graph title
+        const deviceInfo = document.getElementById('device-info');
+        deviceInfo.innerHTML = `<h2>${source} - ${parameter}</h2>`;
+        
+        // Draw the graph with the processed data
         drawZoomableGraph(data, parameter);
     } catch (error) {
         console.error('Error displaying parameter graph:', error);
@@ -143,16 +151,21 @@ function drawZoomableGraph(data, parameter) {
 
     const ctx = canvas.getContext('2d');
     
-    // Prepare data
+    // Process the data for the chart
     const chartData = {
-        labels: data.map(item => new Date(item.timestamp)),
+        labels: data.map(item => new Date(item.timestamp || item.SystemProperties['iothub-enqueuedtime'])),
         datasets: [{
             label: parameter,
-            data: data.map(item => Number(item.Body[parameter])),
+            // Convert string values to numbers and handle any potential non-numeric values
+            data: data.map(item => {
+                const value = item.Body[parameter];
+                return isNaN(parseFloat(value)) ? null : parseFloat(value);
+            }),
             borderWidth: 1,
             borderColor: 'rgba(75, 192, 192, 1)',
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            fill: false
+            fill: false,
+            pointRadius: 2
         }]
     };
 
