@@ -142,12 +142,10 @@ let currentStartTime, currentEndTime;
 
 // Move the fetch function outside drawZoomableGraph
 async function fetchNewDataForRange(start, end, source, parameter, chart) {
-    // Clear any pending fetch
     if (window.fetchTimeout) {
         clearTimeout(window.fetchTimeout);
     }
 
-    // Wait for 500ms of no changes before fetching
     window.fetchTimeout = setTimeout(async () => {
         try {
             const response = await fetch(
@@ -169,10 +167,24 @@ async function fetchNewDataForRange(start, end, source, parameter, chart) {
             chart.data.labels = data.map(item => 
                 new Date(item.timestamp || item.SystemProperties['iothub-enqueuedtime'])
             );
-            chart.data.datasets[0].data = data.map(item => {
+            
+            const newData = data.map(item => {
                 const value = item.Body[parameter];
                 return isNaN(parseFloat(value)) ? null : parseFloat(value);
             });
+            
+            chart.data.datasets[0].data = newData;
+            
+            // Automatically adjust Y axis
+            const validValues = newData.filter(v => v !== null);
+            if (validValues.length > 0) {
+                const min = Math.min(...validValues);
+                const max = Math.max(...validValues);
+                const padding = (max - min) * 0.1; // Add 10% padding
+                
+                chart.options.scales.y.min = min - padding;
+                chart.options.scales.y.max = max + padding;
+            }
             
             chart.update('none'); // Update without animation
             
@@ -189,27 +201,20 @@ function drawZoomableGraph(data, parameter, source) {
     const graphContainer = document.getElementById('graph');
     graphContainer.innerHTML = '';
 
-    // Add control buttons container
+    // Simplified controls
     const controlsDiv = document.createElement('div');
     controlsDiv.className = 'graph-controls';
     graphContainer.appendChild(controlsDiv);
 
-    // Add zoom controls
     controlsDiv.innerHTML = `
-        <div class="zoom-controls">
-            <button id="zoomIn">+</button>
-            <button id="zoomOut">-</button>
-            <button id="resetZoom">Reset</button>
-        </div>
         <div class="time-range-controls">
-            <button id="move1DayLeft">← 1d</button>
-            <button id="move1DayRight">1d →</button>
+            <button id="moveLeft">←</button>
             <select id="timeRangeSelect">
-                <option value="24">24 hours</option>
                 <option value="168">1 week</option>
                 <option value="720" selected>1 month</option>
                 <option value="2160">3 months</option>
             </select>
+            <button id="moveRight">→</button>
         </div>
     `;
 
@@ -249,22 +254,26 @@ function drawZoomableGraph(data, parameter, source) {
                     zoom: {
                         wheel: {
                             enabled: true,
-                            mode: 'x' // Only zoom horizontally
+                            mode: 'x'
                         },
                         pinch: {
                             enabled: true,
-                            mode: 'x' // Only zoom horizontally
+                            mode: 'x'
                         },
                         mode: 'x',
                         onZoomComplete: async function(ctx) {
-                            // Get the new time range after zooming
                             const {min, max} = ctx.chart.scales.x;
                             await fetchNewDataForRange(new Date(min), new Date(max), source, parameter, chart);
                         }
                     },
                     pan: {
                         enabled: true,
-                        mode: 'xy'
+                        mode: 'x',
+                        threshold: 10,
+                        onPanComplete: async function(ctx) {
+                            const {min, max} = ctx.chart.scales.x;
+                            await fetchNewDataForRange(new Date(min), new Date(max), source, parameter, chart);
+                        }
                     }
                 }
             },
@@ -272,10 +281,18 @@ function drawZoomableGraph(data, parameter, source) {
                 x: {
                     type: 'time',
                     time: {
-                        unit: 'day'
+                        unit: 'hour',
+                        displayFormats: {
+                            hour: 'MMM D, HH:mm'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Time'
                     }
                 },
                 y: {
+                    beginAtZero: false,
                     title: {
                         display: true,
                         text: parameter
@@ -285,54 +302,38 @@ function drawZoomableGraph(data, parameter, source) {
         }
     });
 
-    // Add event listeners for controls
-    document.getElementById('zoomIn').addEventListener('click', () => {
-        const range = currentEndTime - currentStartTime;
-        const newRange = range / 2;
-        const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
-        const newStart = new Date(center.getTime() - newRange / 2);
-        const newEnd = new Date(center.getTime() + newRange / 2);
-        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
-    });
+    // Function to get movement interval based on current time range
+    function getMovementInterval() {
+        const timeRangeHours = parseInt(document.getElementById('timeRangeSelect').value);
+        if (timeRangeHours >= 2160) return 30 * 24 * 60 * 60 * 1000; // 1 month for 3-month view
+        if (timeRangeHours >= 720) return 7 * 24 * 60 * 60 * 1000;  // 1 week for 1-month view
+        return 24 * 60 * 60 * 1000; // 1 day for 1-week view
+    }
 
-    document.getElementById('zoomOut').addEventListener('click', () => {
+    document.getElementById('moveLeft').addEventListener('click', () => {
+        const interval = getMovementInterval();
         const range = currentEndTime - currentStartTime;
-        const newRange = range * 2;
-        const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
-        const newStart = new Date(center.getTime() - newRange / 2);
-        const newEnd = new Date(center.getTime() + newRange / 2);
-        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
-    });
-
-    document.getElementById('resetZoom').addEventListener('click', () => {
-        const end = new Date();
-        const start = new Date();
-        start.setMonth(start.getMonth() - 1);
-        fetchNewDataForRange(start, end, source, parameter, chart);
-    });
-
-    document.getElementById('move1DayLeft').addEventListener('click', () => {
-        const range = currentEndTime - currentStartTime;
-        const newStart = new Date(currentStartTime.getTime() - 24 * 60 * 60 * 1000);
+        const newStart = new Date(currentStartTime.getTime() - interval);
         const newEnd = new Date(newStart.getTime() + range);
         fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
     });
 
-    document.getElementById('move1DayRight').addEventListener('click', () => {
+    document.getElementById('moveRight').addEventListener('click', () => {
+        const interval = getMovementInterval();
         const range = currentEndTime - currentStartTime;
-        const newEnd = new Date(currentEndTime.getTime() + 24 * 60 * 60 * 1000);
+        const newEnd = new Date(currentEndTime.getTime() + interval);
         const newStart = new Date(newEnd.getTime() - range);
         fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
     });
 
-    document.getElementById('timeRangeSelect').addEventListener('change', () => {
-        const range = currentEndTime - currentStartTime;
-        const newRange = range * document.getElementById('timeRangeSelect').value;
-        const center = new Date((currentStartTime.getTime() + currentEndTime.getTime()) / 2);
-        const newStart = new Date(center.getTime() - newRange / 2);
-        const newEnd = new Date(center.getTime() + newRange / 2);
-        fetchNewDataForRange(newStart, newEnd, source, parameter, chart);
+    document.getElementById('timeRangeSelect').addEventListener('change', (e) => {
+        const hours = parseInt(e.target.value);
+        const end = new Date();
+        const start = new Date(end - (hours * 60 * 60 * 1000));
+        fetchNewDataForRange(start, end, source, parameter, chart);
     });
+
+    return chart;
 }
 
 async function fetchMonthsForSource(source) {
