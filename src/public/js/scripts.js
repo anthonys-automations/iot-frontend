@@ -56,6 +56,10 @@ async function displayDevices(devices) {
         const deviceList = document.getElementById('device-list');
         deviceList.innerHTML = '';
 
+        if (!devices || !Array.isArray(devices)) {
+            throw new Error('Invalid devices data received');
+        }
+
         // Create hierarchical list
         for (const device of devices) {
             const deviceDiv = document.createElement('div');
@@ -92,7 +96,14 @@ async function displayDevices(devices) {
         }
     } catch (error) {
         console.error('Error displaying devices:', error);
+        alert('Failed to load devices. Please try again later.');
     }
+}
+
+function sanitizeHTML(str) {
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
 }
 
 async function displayParameterGraph(source, parameter) {
@@ -107,10 +118,13 @@ async function displayParameterGraph(source, parameter) {
             `/api/device-details?source=${source}&parameter=${parameter}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}`
         );
         const data = await response.json();
+        if (!Array.isArray(data)) {
+            throw new Error('Invalid data format received');
+        }
         
-        // Update graph title
+        // Sanitize dynamic content
         const deviceInfo = document.getElementById('device-info');
-        deviceInfo.innerHTML = `<h2>${source} - ${parameter}</h2>`;
+        deviceInfo.innerHTML = `<h2>${sanitizeHTML(source)} - ${sanitizeHTML(parameter)}</h2>`;
         
         // Draw the graph with zoom capabilities
         drawZoomableGraph(data, parameter);
