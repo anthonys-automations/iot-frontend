@@ -279,23 +279,9 @@ function drawZoomableGraph(data, parameter, source) {
     canvas.addEventListener('mouseenter', enableZoomPan);
     canvas.addEventListener('mouseleave', disableZoomPan);
 
-    // Function to reset chart state
-    function resetChartState() {
-        chart.resetZoom();
-        chart.update('none');
-    }
-
-    // Add event listeners for mouse interactions
-    canvas.addEventListener('wheel', () => {
-        resetChartState();
-    });
-
-    canvas.addEventListener('mousedown', () => {
-        resetChartState();
-    });
-
-    // Update button handlers to reset chart state
+    // Update button handlers to use direct scale manipulation
     document.getElementById('zoomIn').addEventListener('click', () => {
+        disableZoomPan(); // Disable during button interaction
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
@@ -304,10 +290,11 @@ function drawZoomableGraph(data, parameter, source) {
         const newStart = new Date(center.getTime() - newRange / 2);
         const newEnd = new Date(center.getTime() + newRange / 2);
         updateViewRange(newStart, newEnd);
-        resetChartState();
+        enableZoomPan(); // Re-enable after interaction
     });
 
     document.getElementById('zoomOut').addEventListener('click', () => {
+        disableZoomPan(); // Disable during button interaction
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
@@ -316,10 +303,11 @@ function drawZoomableGraph(data, parameter, source) {
         const newStart = new Date(center.getTime() - newRange / 2);
         const newEnd = new Date(center.getTime() + newRange / 2);
         updateViewRange(newStart, newEnd);
-        resetChartState();
+        enableZoomPan(); // Re-enable after interaction
     });
 
     document.getElementById('moveLeft').addEventListener('click', () => {
+        disableZoomPan(); // Disable during button interaction
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
@@ -327,10 +315,11 @@ function drawZoomableGraph(data, parameter, source) {
         const newStart = new Date(currentMin.getTime() - moveAmount);
         const newEnd = new Date(currentMax.getTime() - moveAmount);
         updateViewRange(newStart, newEnd);
-        resetChartState();
+        enableZoomPan(); // Re-enable after interaction
     });
 
     document.getElementById('moveRight').addEventListener('click', () => {
+        disableZoomPan(); // Disable during button interaction
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
@@ -338,7 +327,7 @@ function drawZoomableGraph(data, parameter, source) {
         const newStart = new Date(currentMin.getTime() + moveAmount);
         const newEnd = new Date(currentMax.getTime() + moveAmount);
         updateViewRange(newStart, newEnd);
-        resetChartState();
+        enableZoomPan(); // Re-enable after interaction
     });
 
     // Update the zoom plugin configuration
