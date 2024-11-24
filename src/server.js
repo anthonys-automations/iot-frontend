@@ -124,6 +124,18 @@ app.post('/api/signup', express.json(), async (req, res) => {
     }
 });
 
+app.get('/api/device-parameters', async (req, res) => {
+  const source = req.query.source;
+  try {
+    // Get all unique parameters for this device
+    const parameters = await cosmosDBReader.getDeviceParameters(source);
+    res.json(parameters);
+  } catch (error) {
+    console.error(`Error fetching parameters for source: ${source}`, error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

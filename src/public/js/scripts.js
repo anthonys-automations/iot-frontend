@@ -51,28 +51,136 @@ async function fetchDevices() {
   }
 }
 
-function displayDevices(devices) {
-  try {
-    if (!devices || !Array.isArray(devices)) {
-      throw new Error('Invalid devices data received');
-    }
+async function displayDevices(devices) {
+    try {
+        const deviceList = document.getElementById('device-list');
+        deviceList.innerHTML = '';
 
-    const deviceList = document.getElementById('device-list');
-    if (!deviceList) {
-      throw new Error('Device list element not found');
+        // Create hierarchical list
+        for (const device of devices) {
+            const deviceDiv = document.createElement('div');
+            deviceDiv.className = 'device-container';
+            
+            // Create device header
+            const deviceHeader = document.createElement('div');
+            deviceHeader.className = 'device-header';
+            deviceHeader.textContent = device.source || 'Unknown device';
+            deviceDiv.appendChild(deviceHeader);
+            
+            // Create parameters container
+            const parametersDiv = document.createElement('div');
+            parametersDiv.className = 'parameters-list';
+            
+            // Fetch and display parameters for this device
+            try {
+                const response = await fetch(`/api/device-parameters?source=${device.source}`);
+                const parameters = await response.json();
+                
+                parameters.forEach(param => {
+                    const paramDiv = document.createElement('div');
+                    paramDiv.className = 'parameter-item';
+                    paramDiv.textContent = param;
+                    paramDiv.onclick = () => displayParameterGraph(device.source, param);
+                    parametersDiv.appendChild(paramDiv);
+                });
+            } catch (error) {
+                console.error(`Error fetching parameters for ${device.source}:`, error);
+            }
+            
+            deviceDiv.appendChild(parametersDiv);
+            deviceList.appendChild(deviceDiv);
+        }
+    } catch (error) {
+        console.error('Error displaying devices:', error);
     }
+}
 
-    deviceList.innerHTML = '';
-    devices.forEach(device => {
-      const div = document.createElement('div');
-      div.className = 'device-item';
-      div.textContent = device.source || 'Unknown device';
-      div.onclick = () => fetchDeviceDetails(device.source);
-      deviceList.appendChild(div);
+async function displayParameterGraph(source, parameter) {
+    try {
+        // Calculate default time range (1 month back from now)
+        const endTime = new Date();
+        const startTime = new Date();
+        startTime.setMonth(startTime.getMonth() - 1);
+        
+        // Fetch data for the selected time range
+        const response = await fetch(
+            `/api/device-details?source=${source}&parameter=${parameter}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}`
+        );
+        const data = await response.json();
+        
+        // Update graph title
+        const deviceInfo = document.getElementById('device-info');
+        deviceInfo.innerHTML = `<h2>${source} - ${parameter}</h2>`;
+        
+        // Draw the graph with zoom capabilities
+        drawZoomableGraph(data, parameter);
+    } catch (error) {
+        console.error('Error displaying parameter graph:', error);
+        alert(`Error loading graph: ${error.message}`);
+    }
+}
+
+function drawZoomableGraph(data, parameter) {
+    const graphContainer = document.getElementById('graph');
+    graphContainer.innerHTML = '';
+
+    const canvas = document.createElement('canvas');
+    graphContainer.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    
+    // Prepare data
+    const chartData = {
+        labels: data.map(item => new Date(item.timestamp)),
+        datasets: [{
+            label: parameter,
+            data: data.map(item => Number(item.Body[parameter])),
+            borderWidth: 1,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            fill: false
+        }]
+    };
+
+    // Create chart with zoom plugin
+    new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            plugins: {
+                zoom: {
+                    zoom: {
+                        wheel: {
+                            enabled: true,
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        mode: 'xy'
+                    },
+                    pan: {
+                        enabled: true,
+                        mode: 'xy'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: parameter
+                    }
+                }
+            }
+        }
     });
-  } catch (error) {
-    console.error('Error displaying devices:', error);
-  }
 }
 
 async function fetchMonthsForSource(source) {

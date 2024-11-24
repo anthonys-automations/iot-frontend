@@ -1,4 +1,3 @@
-
 const { CosmosClient } = require('@azure/cosmos');
 const { DefaultAzureCredential } = require('@azure/identity');
 const { HttpsProxyAgent } = require('https-proxy-agent');
@@ -34,41 +33,57 @@ class CosmosDBReader {
         }
     }
 
-    async getDeviceDetails(source, month) {
+    async getDeviceDetails(source, parameter, startTime, endTime) {
         try {
-          console.log(`Fetching device details for source: ${source} and month: ${month}`);
-          const database = this.client.database(this.databaseId);
-          const container = database.container(this.containerId);
-          const query = {
-            query: 'SELECT c.timestamp,c.Body FROM c WHERE c.source = @source AND c.month = @month ORDER BY c.timestamp',
-            parameters: [
-              { name: '@source', value: source },
-              { name: '@month', value: month }
-            ]
-          };
-          const { resources: items } = await container.items.query(query).fetchAll();
-          return items;
+            const database = this.client.database(this.databaseId);
+            const container = database.container(this.containerId);
+            const query = {
+                query: 'SELECT c.timestamp, c.Body FROM c WHERE c.source = @source AND c.timestamp >= @startTime AND c.timestamp <= @endTime ORDER BY c.timestamp',
+                parameters: [
+                    { name: '@source', value: source },
+                    { name: '@startTime', value: startTime },
+                    { name: '@endTime', value: endTime }
+                ]
+            };
+            const { resources: items } = await container.items.query(query).fetchAll();
+            return items;
         } catch (error) {
-          console.error(`Error fetching details for source: ${source} and month: ${month} - ${error.message}`);
-          throw error;
+            console.error(`Error fetching details: ${error.message}`);
+            throw error;
         }
-      }
-      
-  async getDistinctMonths(source) {
-      try {
-          const database = this.client.database(this.databaseId);
-          const container = database.container(this.containerId);
-          const query = {
-              query: 'SELECT DISTINCT c.month FROM c WHERE c.source = @source ORDER BY c.month DESC',
-              parameters: [{ name: '@source', value: source }]
-          };
-          const { resources: items } = await container.items.query(query).fetchAll();
-          return items.map(item => item.month);
-      } catch (error) {
-          console.error(`Error fetching months for source ${source}: ${error.message}`);
-          throw error;
-      }
-  }
+    }
+
+    async getDistinctMonths(source) {
+        try {
+            const database = this.client.database(this.databaseId);
+            const container = database.container(this.containerId);
+            const query = {
+                query: 'SELECT DISTINCT c.month FROM c WHERE c.source = @source ORDER BY c.month DESC',
+                parameters: [{ name: '@source', value: source }]
+            };
+            const { resources: items } = await container.items.query(query).fetchAll();
+            return items.map(item => item.month);
+        } catch (error) {
+            console.error(`Error fetching months for source ${source}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async getDeviceParameters(source) {
+        try {
+            const database = this.client.database(this.databaseId);
+            const container = database.container(this.containerId);
+            const query = {
+                query: 'SELECT DISTINCT VALUE k FROM c JOIN k IN OBJECT_KEYS(c.Body) WHERE c.source = @source',
+                parameters: [{ name: '@source', value: source }]
+            };
+            const { resources: parameters } = await container.items.query(query).fetchAll();
+            return parameters;
+        } catch (error) {
+            console.error(`Error fetching parameters for source ${source}: ${error.message}`);
+            throw error;
+        }
+    }
 }
 
 module.exports = CosmosDBReader;
