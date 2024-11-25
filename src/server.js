@@ -36,13 +36,15 @@ const deviceParametersSchema = Joi.object({
 });
 
 app.get('/api/devices', async (req, res) => {
-  try {
-      const data = await cosmosDBReader.getDeviceSources();
-      res.json(data);
-  } catch (error) {
-      console.error(`Error in /api/devices: ${error.message}`);
-      res.status(500).json({ error: error.message });
-  }
+    try {
+        console.log('Fetching devices...');
+        const devices = await cosmosDBReader.getDevices();
+        console.log('Devices found:', devices);
+        res.json(devices);
+    } catch (error) {
+        console.error('Error fetching devices:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 app.get('/api/device-details', async (req, res) => {

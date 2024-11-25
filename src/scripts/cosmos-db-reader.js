@@ -198,6 +198,20 @@ class CosmosDBReader {
             throw error;
         }
     }
+
+    async getDevices() {
+        try {
+            console.log('Connecting to database...');
+            const database = this.client.database(this.databaseId);
+            const container = database.container(this.containerId);
+            
+            // ... rest of the code ...
+            
+        } catch (error) {
+            console.error('Error in getDevices:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = CosmosDBReader;

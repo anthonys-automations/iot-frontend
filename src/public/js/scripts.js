@@ -143,9 +143,6 @@ async function displayParameterGraph(source, parameter) {
     }
 }
 
-// Move these variables to the global scope
-let currentStartTime, currentEndTime;
-
 // Update the fetch function to handle the new response format
 async function fetchNewDataForRange(start, end, source, parameter, chart) {
     if (window.fetchTimeout) {
