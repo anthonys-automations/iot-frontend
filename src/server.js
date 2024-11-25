@@ -1,5 +1,6 @@
 const express = require('express');
 const compression = require('compression');
+const Joi = require('joi');
 const app = express();
 
 const cosmosEndpoint = process.env.CosmosEndpoint;
@@ -18,6 +19,18 @@ const path = require('path');
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Define validation schemas
+const deviceDetailsSchema = Joi.object({
+    source: Joi.string().required(),
+    parameter: Joi.string().required(),
+    startTime: Joi.date().iso().required(),
+    endTime: Joi.date().iso().required()
+});
+
+const deviceParametersSchema = Joi.object({
+    source: Joi.string().required()
+});
+
 app.get('/api/devices', async (req, res) => {
   try {
       const data = await cosmosDBReader.getDeviceSources();
@@ -29,8 +42,14 @@ app.get('/api/devices', async (req, res) => {
 });
 
 app.get('/api/device-details', async (req, res) => {
+    // Validate the query parameters
+    const { error, value } = deviceDetailsSchema.validate(req.query);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+    }
+
     try {
-        const { source, parameter, startTime, endTime } = req.query;
+        const { source, parameter, startTime, endTime } = value;
         const data = await cosmosDBReader.getDeviceDetails(source, parameter, startTime, endTime);
         res.json(data);
     } catch (error) {
@@ -120,13 +139,14 @@ app.post('/api/signup', express.json(), async (req, res) => {
 });
 
 app.get('/api/device-parameters', async (req, res) => {
-    const source = req.query.source;
-    if (!source) {
-        return res.status(400).json({ error: 'Source parameter is required' });
+    // Validate the query parameters
+    const { error, value } = deviceParametersSchema.validate(req.query);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message });
     }
 
+    const { source } = value;
     try {
-        // Get all unique parameters for this device
         const parameters = await cosmosDBReader.getDeviceParameters(source);
         res.json(parameters);
     } catch (error) {
