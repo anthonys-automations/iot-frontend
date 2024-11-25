@@ -473,76 +473,64 @@ function fetchAndDisplayDataForMonth(source, month, parameter) {
 }
 
 function drawGraph(data, parameter) {
-    // Clear and prepare the graph container
-    const graphContainer = document.getElementById('graph');
-    graphContainer.innerHTML = '';
-    const canvas = document.createElement('canvas');
-    graphContainer.appendChild(canvas);
+  const graphContainer = document.getElementById('graph');
+  graphContainer.innerHTML = ''; // Clear previous graph
 
-    // Validate data
-    if (!data || !Array.isArray(data) || data.length === 0) {
-        console.error('Invalid or empty data received');
-        graphContainer.innerHTML = '<div class="error-message">No data available to display</div>';
-        return;
-    }
+  const canvas = document.createElement('canvas');
+  graphContainer.appendChild(canvas);
 
-    // Process the data
-    const chartData = data.map(item => ({
-        x: new Date(item.timestamp),
-        y: Number(item.Body[parameter]) || 0
-    })).filter(point => !isNaN(point.y)); // Filter out invalid values
+  const ctx = canvas.getContext('2d');
+  
+  // Map the data to labels and values
+  const labels = data.map(item => new Date(item.timestamp));
+  const values = data.map(item => Number(item.Body[parameter]));
 
-    // Create chart configuration by extending the default config
-    const chartConfig = {
-        ...CHART_DEFAULT_CONFIG,
-        data: {
-            datasets: [{
-                label: parameter,
-                data: chartData,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: false
-            }]
+  // Debug: Log the labels and values to ensure they are correct
+  console.log('Labels:', labels);
+  console.log('Values:', values);
+
+  // Create the chart
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: parameter,
+        data: values,
+        borderWidth: 1,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: false
+      }]
+    },
+    options: {
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'day'
+          },
+          title: {
+            display: true,
+            text: 'Timestamp'
+          },
+          ticks: {
+            // autoSkip: false,
+            source: 'data'
+          }
         },
-        options: {
-            ...CHART_DEFAULT_CONFIG.options,
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'day',
-                        displayFormats: {
-                            day: 'MMM D'
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: parameter
-                    },
-                    beginAtZero: false
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: (context) => `${parameter}: ${context.parsed.y}`
-                    }
-                }
-            }
+        y: {
+          title: {
+            display: true,
+            text: parameter
+          }
         }
-    };
-
-    // Create the chart
-    try {
-        new Chart(canvas.getContext('2d'), chartConfig);
-    } catch (error) {
-        console.error('Error creating chart:', error);
-        graphContainer.innerHTML = '<div class="error-message">Failed to create chart</div>';
+      },
+      elements: {
+        line: {
+          tension: 0.2 // Smooth the line
+        }
+      }
     }
+  });
 }
