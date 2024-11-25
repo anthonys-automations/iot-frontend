@@ -19,20 +19,6 @@ class CosmosDBReader {
         this.containerId = containerId;
     }
 
-    async getDeviceSources() {
-        try {
-            console.log(`Fetching device sources from database: ${this.databaseId}, container: ${this.containerId}`);
-            const database = this.client.database(this.databaseId);
-            const container = database.container(this.containerId);
-            const { resources: items } = await container.items.query('SELECT DISTINCT c.source FROM c ORDER BY c.source').fetchAll();
-            console.log(`Fetched device sources: ${JSON.stringify(items, null, 2)}`);
-            return items;
-        } catch (error) {
-            console.error(`Error fetching device sources: ${error.message}`);
-            throw error;
-        }
-    }
-
     async getDeviceDetails(source, parameter, startTime = null, endTime = null) {
         try {
             const database = this.client.database(this.databaseId);
