@@ -111,19 +111,13 @@ async function displayParameterGraph(source, parameter) {
         const deviceInfo = document.getElementById('device-info');
         deviceInfo.innerHTML = `<h2>${source} - ${parameter}</h2>`;
         
-        // Always use the suggested range for initial display
+        // Set the current view range to 30 days but pass all data to graph
         if (suggestedRange && suggestedRange.start && suggestedRange.end) {
             currentStartTime = new Date(suggestedRange.start);
             currentEndTime = new Date(suggestedRange.end);
             
-            // Filter data to only show the suggested range
-            const filteredData = data.filter(item => {
-                const timestamp = new Date(item.timestamp);
-                return timestamp >= currentStartTime && timestamp <= currentEndTime;
-            });
-            
-            // Draw graph with filtered data
-            drawZoomableGraph(filteredData, parameter, source);
+            // Pass all data to graph but set initial view to 30 days
+            drawZoomableGraph(data, parameter, source);
         } else {
             drawZoomableGraph(data, parameter, source);
         }
