@@ -26,6 +26,10 @@ class CosmosDBReader {
             
             let query;
             
+            // Format parameter path for Cosmos DB query
+            // This handles parameters with spaces like "body weight" -> c.Body["body weight"]
+            const parameterPath = `c.Body["${parameter}"]`;
+            
             if (!startTime || !endTime) {
                 // Initial load - try last 60 days first
                 const now = new Date();
@@ -41,7 +45,7 @@ class CosmosDBReader {
                         WHERE 
                             c.Properties.source = @source 
                             AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime
-                            AND IS_DEFINED(c.Body.${parameter})
+                            AND IS_DEFINED(${parameterPath})
                         ORDER BY c.SystemProperties["iothub-enqueuedtime"] DESC
                     `,
                     parameters: [
@@ -60,8 +64,9 @@ class CosmosDBReader {
                                 c.SystemProperties["iothub-enqueuedtime"] as timestamp,
                                 c.Body
                             FROM c 
-                            WHERE c.Properties.source = @source
-                            AND IS_DEFINED(c.Body.${parameter})
+                            WHERE 
+                                c.Properties.source = @source
+                                AND IS_DEFINED(${parameterPath})
                             ORDER BY c.SystemProperties["iothub-enqueuedtime"] DESC
                         `,
                         parameters: [{ name: '@source', value: source }]
@@ -117,7 +122,7 @@ class CosmosDBReader {
                             c.Properties.source = @source 
                             AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime 
                             AND c.SystemProperties["iothub-enqueuedtime"] <= @endTime
-                            AND IS_DEFINED(c.Body.${parameter})
+                            AND IS_DEFINED(${parameterPath})
                         ORDER BY c.SystemProperties["iothub-enqueuedtime"] ASC
                     `,
                     parameters: [
