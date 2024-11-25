@@ -39,11 +39,17 @@ app.get('/api/devices', async (req, res) => {
     try {
         console.log('Fetching devices...');
         const devices = await cosmosDBReader.getDevices();
+        
+        if (!devices || !Array.isArray(devices)) {
+            console.error('Invalid devices data:', devices);
+            return res.status(500).json({ error: 'Invalid data received from database' });
+        }
+        
         console.log('Devices found:', devices);
         res.json(devices);
     } catch (error) {
         console.error('Error fetching devices:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
 

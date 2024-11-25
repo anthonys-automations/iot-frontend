@@ -205,7 +205,25 @@ class CosmosDBReader {
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
             
-            // ... rest of the code ...
+            const query = {
+                query: 'SELECT DISTINCT c.Properties.source FROM c'
+            };
+            
+            const { resources: items } = await container.items.query(query).fetchAll();
+            
+            // Add validation and transformation
+            if (!items || !Array.isArray(items)) {
+                console.error('Invalid response from database:', items);
+                return [];
+            }
+            
+            // Transform and filter out any invalid entries
+            const devices = items
+                .filter(item => item && item.source)
+                .map(item => item.source);
+                
+            console.log('Devices retrieved:', devices);
+            return devices;
             
         } catch (error) {
             console.error('Error in getDevices:', error);

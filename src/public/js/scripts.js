@@ -33,22 +33,26 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function fetchDevices() {
-  try {
-    const response = await fetch('/api/devices');
-    if (!response.ok) {
-      throw new Error(`Failed to fetch devices: ${response.status} ${response.statusText}`);
+    try {
+        const response = await fetch('/api/devices');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const text = await response.text();
+        console.log('Raw response:', text);
+        
+        if (!text) {
+            throw new Error('Empty response received');
+        }
+        
+        const devices = JSON.parse(text);
+        return devices;
+    } catch (error) {
+        console.error('Error fetching devices:', error);
+        const deviceList = document.getElementById('device-list');
+        deviceList.innerHTML = '<p class="error">Error loading devices. Please try again later.</p>';
+        throw error;
     }
-    const devices = await response.json();
-    displayDevices(devices);
-  } catch (error) {
-    console.error('Error fetching devices:', error);
-    const deviceList = document.getElementById('device-list');
-    deviceList.innerHTML = `
-      <div class="error-message">
-        Unable to load devices. Please try again later.
-      </div>
-    `;
-  }
 }
 
 async function displayDevices(devices) {
