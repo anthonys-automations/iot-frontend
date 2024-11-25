@@ -46,6 +46,7 @@ async function fetchDevices() {
         }
         
         const devices = JSON.parse(text);
+        displayDevices(devices);
         return devices;
     } catch (error) {
         console.error('Error fetching devices:', error);
@@ -55,53 +56,29 @@ async function fetchDevices() {
     }
 }
 
-async function displayDevices(devices) {
-    try {
-        const deviceList = document.getElementById('device-list');
-        deviceList.innerHTML = '';
-
-        if (!devices || !Array.isArray(devices)) {
-            throw new Error('Invalid devices data received');
-        }
-
-        // Create hierarchical list
-        for (const device of devices) {
-            const deviceDiv = document.createElement('div');
-            deviceDiv.className = 'device-container';
-            
-            // Create device header
-            const deviceHeader = document.createElement('div');
-            deviceHeader.className = 'device-header';
-            deviceHeader.textContent = device.source || 'Unknown device';
-            deviceDiv.appendChild(deviceHeader);
-            
-            // Create parameters container
-            const parametersDiv = document.createElement('div');
-            parametersDiv.className = 'parameters-list';
-            
-            // Fetch and display parameters for this device
-            try {
-                const response = await fetch(`/api/device-parameters?source=${device.source}`);
-                const parameters = await response.json();
-                
-                parameters.forEach(param => {
-                    const paramDiv = document.createElement('div');
-                    paramDiv.className = 'parameter-item';
-                    paramDiv.textContent = param;
-                    paramDiv.onclick = () => displayParameterGraph(device.source, param);
-                    parametersDiv.appendChild(paramDiv);
-                });
-            } catch (error) {
-                console.error(`Error fetching parameters for ${device.source}:`, error);
-            }
-            
-            deviceDiv.appendChild(parametersDiv);
-            deviceList.appendChild(deviceDiv);
-        }
-    } catch (error) {
-        console.error('Error displaying devices:', error);
-        alert('Failed to load devices. Please try again later.');
+function displayDevices(devices) {
+    const deviceList = document.getElementById('device-list');
+    if (!devices || devices.length === 0) {
+        deviceList.innerHTML = '<p>No devices found.</p>';
+        return;
     }
+
+    // Create the device list HTML
+    const deviceListHTML = devices.map(device => `
+        <div class="device-item" data-source="${sanitizeHTML(device)}">
+            <h3>${sanitizeHTML(device)}</h3>
+            <div class="parameters" id="parameters-${sanitizeHTML(device)}">
+                Loading parameters...
+            </div>
+        </div>
+    `).join('');
+
+    deviceList.innerHTML = deviceListHTML;
+
+    // Fetch parameters for each device
+    devices.forEach(device => {
+        fetchDeviceParameters(device);
+    });
 }
 
 function sanitizeHTML(str) {
@@ -540,4 +517,42 @@ function drawGraph(data, parameter) {
       }
     }
   });
+}
+
+async function fetchDeviceParameters(source) {
+    try {
+        const response = await fetch(`/api/device-parameters?source=${encodeURIComponent(source)}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const parameters = await response.json();
+        console.log(`Parameters for ${source}:`, parameters); // Debug log
+        
+        const parameterContainer = document.getElementById(`parameters-${source}`);
+        if (!parameterContainer) {
+            console.error(`Container for ${source} parameters not found`);
+            return;
+        }
+
+        if (!parameters || parameters.length === 0) {
+            parameterContainer.innerHTML = '<p>No parameters available</p>';
+            return;
+        }
+
+        const parameterListHTML = parameters.map(parameter => `
+            <button class="parameter-button" 
+                    onclick="displayParameterGraph('${sanitizeHTML(source)}', '${sanitizeHTML(parameter)}')">
+                ${sanitizeHTML(parameter)}
+            </button>
+        `).join('');
+
+        parameterContainer.innerHTML = parameterListHTML;
+    } catch (error) {
+        console.error(`Error fetching parameters for ${source}:`, error);
+        const parameterContainer = document.getElementById(`parameters-${source}`);
+        if (parameterContainer) {
+            parameterContainer.innerHTML = '<p class="error">Error loading parameters</p>';
+        }
+    }
 }
