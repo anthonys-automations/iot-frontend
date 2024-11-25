@@ -258,7 +258,7 @@ function drawZoomableGraph(data, parameter, source) {
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
-        const newRange = range * 0.7;
+        const newRange = range * 0.3;
         const center = new Date((currentMin.getTime() + currentMax.getTime()) / 2);
         const newStart = new Date(center.getTime() - newRange / 2);
         const newEnd = new Date(center.getTime() + newRange / 2);
@@ -269,7 +269,7 @@ function drawZoomableGraph(data, parameter, source) {
         const currentMin = chart.options.scales.x.min || currentStartTime;
         const currentMax = chart.options.scales.x.max || currentEndTime;
         const range = currentMax - currentMin;
-        const newRange = range * 1.3;
+        const newRange = range * 3;
         const center = new Date((currentMin.getTime() + currentMax.getTime()) / 2);
         const newStart = new Date(center.getTime() - newRange / 2);
         const newEnd = new Date(center.getTime() + newRange / 2);
