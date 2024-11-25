@@ -82,3 +82,59 @@ button[type="submit"] {
 button[type="submit"]:hover {
     background-color: #45a049;
 }
+
+.device-container {
+    margin-bottom: 1rem;
+}
+
+.device-header {
+    font-weight: bold;
+    padding: 0.5rem;
+    background-color: #f0f0f0;
+    cursor: default;
+}
+
+.parameters-list {
+    padding-left: 1rem;
+}
+
+.parameter-item {
+    padding: 0.3rem 0.5rem;
+    cursor: pointer;
+    color: #2c5282;
+}
+
+.parameter-item:hover {
+    background-color: #e2e8f0;
+}
+
+.graph-controls {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+}
+
+.graph-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.graph-buttons button {
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 40px;
+    font-size: 1.2rem;
+}
+
+.graph-buttons button:hover {
+    background-color: #f0f0f0;
+}
+
+.graph-buttons button:active {
+    background-color: #e0e0e0;
+    transform: translateY(1px);
+}
