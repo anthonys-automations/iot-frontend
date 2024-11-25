@@ -326,6 +326,8 @@ function drawZoomableGraph(data, parameter, source) {
                             hour: 'MMM D, HH:mm'
                         }
                     },
+                    max: currentEndTime,
+                    min: currentStartTime,
                     title: {
                         display: false,
                         text: 'Time'
