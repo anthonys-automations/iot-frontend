@@ -41,6 +41,7 @@ class CosmosDBReader {
                         WHERE 
                             c.Properties.source = @source 
                             AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime
+                            AND IS_DEFINED(c.Body.${parameter})
                         ORDER BY c.SystemProperties["iothub-enqueuedtime"] DESC
                     `,
                     parameters: [
@@ -60,6 +61,7 @@ class CosmosDBReader {
                                 c.Body
                             FROM c 
                             WHERE c.Properties.source = @source
+                            AND IS_DEFINED(c.Body.${parameter})
                             ORDER BY c.SystemProperties["iothub-enqueuedtime"] DESC
                         `,
                         parameters: [{ name: '@source', value: source }]
@@ -96,38 +98,38 @@ class CosmosDBReader {
                         end: now
                     }
                 };
+            } else {
+                // For subsequent requests with time range
+                const start = new Date(startTime);
+                const end = new Date(endTime);
+                const timeRange = end - start;
+                
+                const extendedStart = new Date(start.getTime() - timeRange);
+                const extendedEnd = new Date(end.getTime() + timeRange);
+                
+                query = {
+                    query: `
+                        SELECT 
+                            c.SystemProperties["iothub-enqueuedtime"] as timestamp,
+                            c.Body
+                        FROM c 
+                        WHERE 
+                            c.Properties.source = @source 
+                            AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime 
+                            AND c.SystemProperties["iothub-enqueuedtime"] <= @endTime
+                            AND IS_DEFINED(c.Body.${parameter})
+                        ORDER BY c.SystemProperties["iothub-enqueuedtime"] ASC
+                    `,
+                    parameters: [
+                        { name: '@source', value: source },
+                        { name: '@startTime', value: extendedStart.toISOString() },
+                        { name: '@endTime', value: extendedEnd.toISOString() }
+                    ]
+                };
+                
+                const { resources: items } = await container.items.query(query).fetchAll();
+                return { data: items };
             }
-            
-            // For subsequent requests with time range
-            const start = new Date(startTime);
-            const end = new Date(endTime);
-            const timeRange = end - start;
-            
-            // Add one extra range to both sides
-            const extendedStart = new Date(start.getTime() - timeRange);
-            const extendedEnd = new Date(end.getTime() + timeRange);
-            
-            query = {
-                query: `
-                    SELECT 
-                        c.SystemProperties["iothub-enqueuedtime"] as timestamp,
-                        c.Body
-                    FROM c 
-                    WHERE 
-                        c.Properties.source = @source 
-                        AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime 
-                        AND c.SystemProperties["iothub-enqueuedtime"] <= @endTime
-                    ORDER BY c.SystemProperties["iothub-enqueuedtime"] ASC
-                `,
-                parameters: [
-                    { name: '@source', value: source },
-                    { name: '@startTime', value: extendedStart.toISOString() },
-                    { name: '@endTime', value: extendedEnd.toISOString() }
-                ]
-            };
-            
-            const { resources: items } = await container.items.query(query).fetchAll();
-            return { data: items };
             
         } catch (error) {
             console.error(`Error fetching details: ${error.message}`);
