@@ -111,16 +111,25 @@ async function displayParameterGraph(source, parameter) {
         const deviceInfo = document.getElementById('device-info');
         deviceInfo.innerHTML = `<h2>${source} - ${parameter}</h2>`;
         
-        // Add null check for suggestedRange
+        // Always use the suggested range for initial display
         if (suggestedRange && suggestedRange.start && suggestedRange.end) {
             currentStartTime = new Date(suggestedRange.start);
             currentEndTime = new Date(suggestedRange.end);
+            
+            // Filter data to only show the suggested range
+            const filteredData = data.filter(item => {
+                const timestamp = new Date(item.timestamp);
+                return timestamp >= currentStartTime && timestamp <= currentEndTime;
+            });
+            
+            // Draw graph with filtered data
+            drawZoomableGraph(filteredData, parameter, source);
+        } else {
+            drawZoomableGraph(data, parameter, source);
         }
-        
-        drawZoomableGraph(data, parameter, source);
     } catch (error) {
         console.error('Error displaying parameter graph:', error);
-        alert(`Error loading graph: ${error.message}`);
+        alert('Failed to load parameter graph');
     }
 }
 
