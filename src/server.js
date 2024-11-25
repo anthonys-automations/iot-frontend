@@ -23,8 +23,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 const deviceDetailsSchema = Joi.object({
     source: Joi.string().required(),
     parameter: Joi.string().required(),
-    startTime: Joi.date().iso().required(),
-    endTime: Joi.date().iso().required()
+    startTime: Joi.date().iso(),
+    endTime: Joi.date().iso().when('startTime', {
+        is: Joi.exist(),
+        then: Joi.date().iso().required(),
+        otherwise: Joi.forbidden()
+    })
 });
 
 const deviceParametersSchema = Joi.object({
@@ -42,15 +46,36 @@ app.get('/api/devices', async (req, res) => {
 });
 
 app.get('/api/device-details', async (req, res) => {
-    // Validate the query parameters
-    const { error, value } = deviceDetailsSchema.validate(req.query);
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
-
     try {
-        const { source, parameter, startTime, endTime } = value;
-        const data = await cosmosDBReader.getDeviceDetails(source, parameter, startTime, endTime);
+        const { source, parameter } = req.query;
+        let { startTime, endTime } = req.query;
+        
+        // Add type checking for dates
+        if (startTime && !isNaN(new Date(startTime).getTime()) && 
+            endTime && !isNaN(new Date(endTime).getTime())) {
+            const { error } = deviceDetailsSchema.validate({ 
+                source, parameter, startTime, endTime 
+            });
+            if (error) {
+                return res.status(400).json({ error: error.details[0].message });
+            }
+        } else if (startTime || endTime) {
+            // If one of the dates is invalid
+            return res.status(400).json({ error: 'Invalid date format provided' });
+        }
+        
+        const data = await cosmosDBReader.getDeviceDetails(
+            source, 
+            parameter, 
+            startTime, 
+            endTime
+        );
+        
+        // Add null check for response data
+        if (!data || !data.data) {
+            return res.status(404).json({ error: 'No data found' });
+        }
+        
         res.json(data);
     } catch (error) {
         console.error('Error fetching device details:', error);

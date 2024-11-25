@@ -33,16 +33,95 @@ class CosmosDBReader {
         }
     }
 
-    async getDeviceDetails(source, parameter, startTime, endTime) {
+    async getDeviceDetails(source, parameter, startTime = null, endTime = null) {
         try {
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
             
-            // Convert string dates to ISO format if they aren't already
-            const start = new Date(startTime).toISOString();
-            const end = new Date(endTime).toISOString();
+            let query;
             
-            const query = {
+            if (!startTime || !endTime) {
+                // Initial load - try last 60 days first
+                const now = new Date();
+                const sixtyDaysAgo = new Date(now);
+                sixtyDaysAgo.setDate(now.getDate() - 60);
+                
+                query = {
+                    query: `
+                        SELECT TOP 1000
+                            c.SystemProperties["iothub-enqueuedtime"] as timestamp,
+                            c.Body
+                        FROM c 
+                        WHERE 
+                            c.Properties.source = @source 
+                            AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime
+                        ORDER BY c.SystemProperties["iothub-enqueuedtime"] DESC
+                    `,
+                    parameters: [
+                        { name: '@source', value: source },
+                        { name: '@startTime', value: sixtyDaysAgo.toISOString() }
+                    ]
+                };
+                
+                const { resources: items } = await container.items.query(query).fetchAll();
+                
+                // If we got less than 30 points, query for last 30 points across all time
+                if (items.length < 30) {
+                    query = {
+                        query: `
+                            SELECT TOP 30
+                                c.SystemProperties["iothub-enqueuedtime"] as timestamp,
+                                c.Body
+                            FROM c 
+                            WHERE c.Properties.source = @source
+                            ORDER BY c.SystemProperties["iothub-enqueuedtime"] DESC
+                        `,
+                        parameters: [{ name: '@source', value: source }]
+                    };
+                    const { resources: limitedItems } = await container.items.query(query).fetchAll();
+                    
+                    if (!limitedItems || limitedItems.length === 0) {
+                        return {
+                            data: [],
+                            suggestedRange: {
+                                start: new Date(),
+                                end: new Date()
+                            }
+                        };
+                    }
+                    
+                    return {
+                        data: limitedItems.reverse(),
+                        suggestedRange: {
+                            start: new Date(limitedItems[0].timestamp),
+                            end: new Date(limitedItems[limitedItems.length - 1].timestamp)
+                        }
+                    };
+                }
+                
+                // We got enough data, suggest 30 days range but return 60 days of data
+                const thirtyDaysAgo = new Date(now);
+                thirtyDaysAgo.setDate(now.getDate() - 30);
+                
+                return {
+                    data: items.reverse(),
+                    suggestedRange: {
+                        start: thirtyDaysAgo,
+                        end: now
+                    }
+                };
+            }
+            
+            // For subsequent requests with time range
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            const timeRange = end - start;
+            
+            // Add one extra range to both sides
+            const extendedStart = new Date(start.getTime() - timeRange);
+            const extendedEnd = new Date(end.getTime() + timeRange);
+            
+            query = {
                 query: `
                     SELECT 
                         c.SystemProperties["iothub-enqueuedtime"] as timestamp,
@@ -56,14 +135,13 @@ class CosmosDBReader {
                 `,
                 parameters: [
                     { name: '@source', value: source },
-                    { name: '@startTime', value: start },
-                    { name: '@endTime', value: end }
+                    { name: '@startTime', value: extendedStart.toISOString() },
+                    { name: '@endTime', value: extendedEnd.toISOString() }
                 ]
             };
             
             const { resources: items } = await container.items.query(query).fetchAll();
-            console.log(`Found ${items.length} data points for ${source}`); // Debug log
-            return items;
+            return { data: items };
             
         } catch (error) {
             console.error(`Error fetching details: ${error.message}`);

@@ -106,18 +106,18 @@ function sanitizeHTML(str) {
     return temp.innerHTML;
 }
 
+// Initialize with default values
+let currentStartTime = new Date();
+let currentEndTime = new Date(currentStartTime);
+currentEndTime.setDate(currentEndTime.getDate() + 30); // Default 30-day range
+
 async function displayParameterGraph(source, parameter) {
     try {
-        const endTime = new Date();
-        const startTime = new Date();
-        startTime.setMonth(startTime.getMonth() - 1);
-        
+        // Initial request without time range
         const response = await fetch(
             `/api/device-details?` + new URLSearchParams({
                 source: source,
-                parameter: parameter,
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString()
+                parameter: parameter
             })
         );
         
@@ -125,10 +125,16 @@ async function displayParameterGraph(source, parameter) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const data = await response.json();
+        const { data, suggestedRange } = await response.json();
         
         const deviceInfo = document.getElementById('device-info');
         deviceInfo.innerHTML = `<h2>${source} - ${parameter}</h2>`;
+        
+        // Add null check for suggestedRange
+        if (suggestedRange && suggestedRange.start && suggestedRange.end) {
+            currentStartTime = new Date(suggestedRange.start);
+            currentEndTime = new Date(suggestedRange.end);
+        }
         
         drawZoomableGraph(data, parameter, source);
     } catch (error) {
@@ -140,7 +146,7 @@ async function displayParameterGraph(source, parameter) {
 // Move these variables to the global scope
 let currentStartTime, currentEndTime;
 
-// Move the fetch function outside drawZoomableGraph
+// Update the fetch function to handle the new response format
 async function fetchNewDataForRange(start, end, source, parameter, chart) {
     if (window.fetchTimeout) {
         clearTimeout(window.fetchTimeout);
@@ -161,7 +167,7 @@ async function fetchNewDataForRange(start, end, source, parameter, chart) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const data = await response.json();
+            const { data } = await response.json();
             
             // Update chart with new data
             chart.data.labels = data.map(item => 
