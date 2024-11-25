@@ -225,8 +225,8 @@ function drawZoomableGraph(data, parameter, source) {
     };
 
     // Initialize the time range
-    currentStartTime = new Date(Math.min(...chartData.labels));
-    currentEndTime = new Date(Math.max(...chartData.labels));
+    // currentStartTime = new Date(Math.min(...chartData.labels));
+    // currentEndTime = new Date(Math.max(...chartData.labels));
     
     // Add function to update view without using zoom plugin
     async function updateViewRange(newStart, newEnd) {
