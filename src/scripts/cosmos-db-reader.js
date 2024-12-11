@@ -1,20 +1,8 @@
-const { CosmosClient } = require('@azure/cosmos');
-const { DefaultAzureCredential } = require('@azure/identity');
-const { HttpsProxyAgent } = require('https-proxy-agent');
+const { createCosmosClient } = require('./auth');
 
 class CosmosDBReader {
     constructor(endpoint, databaseId, containerId) {
-        let proxyAgent = null;
-        if (process.env.http_proxy) {
-          const http_proxy = process.env.http_proxy;
-          proxyAgent = new HttpsProxyAgent(http_proxy);
-        }
-
-        this.client = new CosmosClient({
-            endpoint,
-            agent: proxyAgent,
-            aadCredentials: new DefaultAzureCredential()
-        });
+        this.client = createCosmosClient(endpoint, databaseId);
         this.databaseId = databaseId;
         this.containerId = containerId;
     }
