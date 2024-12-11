@@ -14,7 +14,7 @@
     "@azure/cosmos": "^4.0.0",
     "@azure/identity": "^4.3.0",
     "compression": "^1.7.4",
-    "express": "^4.19.2",
+    "express": "^4.21.2",
     "https-proxy-agent": "^7.0.5",
     "uuid": "^9.0.0"
   }
