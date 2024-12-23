@@ -6,6 +6,7 @@ function createCosmosClient(endpoint, databaseId) {
     let proxyAgent = null;
     if (process.env.http_proxy) {
         proxyAgent = new HttpsProxyAgent(process.env.http_proxy);
+        console.log(`Using proxy: ${process.env.http_proxy}`);
     }
 
     let client;
@@ -17,7 +18,10 @@ function createCosmosClient(endpoint, databaseId) {
 
     if (clientId && clientSecret && tenantId) {
         // Use service principal credentials
-        const credentials = new ClientSecretCredential(tenantId, clientId, clientSecret);
+        const clientOptions = process.env.http_proxy ? { proxyOptions: { host: process.env.http_proxy } } : {};
+        const credentials = new ClientSecretCredential(tenantId, clientId, clientSecret, clientOptions);
+        console.log(`Using provided clientId: ${clientId}`);
+
         client = new CosmosClient({
             endpoint,
             agent: proxyAgent,
@@ -25,6 +29,7 @@ function createCosmosClient(endpoint, databaseId) {
         });
     } else {
         // Fallback to managed identity
+        console.log(`Using managed identity.`);
         client = new CosmosClient({
             endpoint,
             agent: proxyAgent,
