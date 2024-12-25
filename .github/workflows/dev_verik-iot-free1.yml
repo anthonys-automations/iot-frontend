@@ -16,6 +16,17 @@ jobs:
       name: 'Testing'
       url: http://localhost:3000
 
+    services:
+      selenium:
+        image: selenium/standalone-chrome:latest
+        options: >-
+          --health-cmd="curl -s http://localhost:4444/wd/hub/status | grep 'ready'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 4444:4444
+
     steps:
       - uses: actions/checkout@v4
 
@@ -38,9 +49,14 @@ jobs:
           # Copy source code
           cp -r src/* deploy/
           # Install production dependencies in deploy folder
-          cd deploy && npm install --production
+          cd deploy && npm install --production==false
 
-      - name: Run tests locally
+      - name: Run linter and unit tests locally
+        run: |
+          npm lint
+          npm test
+
+      - name: Launch application locally
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_APPLICATION_TEST_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_APPLICATION_TEST_CLIENT_SECRET }}
@@ -48,5 +64,9 @@ jobs:
           CosmosEndpoint:   ${{ vars.STAGE_COSMOS_DATABASE_ID }}
           CosmosDatabaseId: ${{ vars.STAGE_COSMOS_ENDPOINT }}
         run: |
-          npm test
-      
+          npm dev
+
+      - name: Run selenium scripts
+        run: |
+          mkdir -p test-results/screenshots
+          npm selenium
