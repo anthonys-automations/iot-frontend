@@ -69,7 +69,7 @@ jobs:
       - name: Run selenium tests
         run: |
           mkdir -p test-results/screenshots
-          npm selenium
+          npm run selenium
 
       # Upload screenshots as artifacts
       - name: Upload screenshots
