@@ -60,8 +60,8 @@ jobs:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_APPLICATION_TEST_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_APPLICATION_TEST_CLIENT_SECRET }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_APPLICATION_TEST_TENANT_ID }}
-          CosmosEndpoint:   ${{ vars.STAGE_COSMOS_DATABASE_ID }}
-          CosmosDatabaseId: ${{ vars.STAGE_COSMOS_ENDPOINT }}
+          CosmosEndpoint:   ${{ vars.STAGE_COSMOS_ENDPOINT }}
+          CosmosDatabaseId: ${{ vars.STAGE_COSMOS_DATABASE_ID }}
         run: |
           npm run dev &
           sleep 20
