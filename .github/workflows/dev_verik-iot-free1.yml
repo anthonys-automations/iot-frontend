@@ -52,8 +52,8 @@ jobs:
 
       - name: Run linter and unit tests locally
         run: |
-          npm lint
-          npm test
+          npm run lint
+          npm run test
 
       - name: Launch application locally
         env:
