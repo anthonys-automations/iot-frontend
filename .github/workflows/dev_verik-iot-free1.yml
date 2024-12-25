@@ -48,7 +48,7 @@ jobs:
           # Copy source code
           cp -r src/* deploy/
           # Install production dependencies in deploy folder
-          cd deploy && npm install --production==false
+          cd deploy && npm install
 
       - name: Run linter and unit tests locally
         run: |
