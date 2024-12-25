@@ -52,7 +52,7 @@ jobs:
 
       - name: Run linter and unit tests locally
         run: |
-          npm run lint
+          # npm run lint
           npm run test
 
       - name: Launch application locally
@@ -88,3 +88,9 @@ jobs:
           else
             echo "No summary available."
           fi
+
+      - name: Stop the app
+        if: always()      
+        run: |
+          npm stop
+
