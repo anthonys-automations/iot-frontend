@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node server.js",
+    "stop": "pkill -SIGINT -f telemetryFrontend",
     "dev": "node src/server.js",
     "lint": "eslint .",
     "test": "jest",

@@ -22,7 +22,7 @@ describe('Battery Voltage Graph Test', function() {
 
   it('should open the page and load the dashboard', async function() {
     // Change URL to wherever your page is served
-    await driver.get('http://localhost:3000/');
+    await driver.get('http://172.17.0.1:3000/');
     
     // Wait until we see the left pane to ensure page is rendered
     const leftPane = await driver.wait(

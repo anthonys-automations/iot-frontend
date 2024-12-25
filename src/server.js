@@ -19,6 +19,9 @@ const path = require('path');
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Set the process title for easier identification
+process.title = 'telemetryFrontend'; // This helps in identifying the process in system tools
+
 // Define validation schemas
 const deviceDetailsSchema = Joi.object({
     source: Joi.string().required(),

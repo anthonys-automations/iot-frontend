@@ -10,11 +10,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ARM64
+  selenium_testing:
+    runs-on: ubuntu-latest
     environment:
-      name: 'Testing'
-      url: http://localhost:3000
+      name: 'Local'
 
     services:
       selenium:
@@ -64,9 +63,28 @@ jobs:
           CosmosEndpoint:   ${{ vars.STAGE_COSMOS_DATABASE_ID }}
           CosmosDatabaseId: ${{ vars.STAGE_COSMOS_ENDPOINT }}
         run: |
-          npm dev
+          npm start &
+          sleep 20
 
-      - name: Run selenium scripts
+      - name: Run selenium tests
         run: |
           mkdir -p test-results/screenshots
           npm selenium
+
+      # Upload screenshots as artifacts
+      - name: Upload screenshots
+        if: always()      
+        uses: actions/upload-artifact@v3
+        with:
+          name: selenium-screenshots
+          path: test-results/screenshots
+
+      # Output test result summary
+      - name: Test result summary
+        if: always()      
+        run: |
+          if [ -f "test-results/summary.txt" ]; then
+            echo "Test Summary:" && cat test-results/summary.txt
+          else
+            echo "No summary available."
+          fi
