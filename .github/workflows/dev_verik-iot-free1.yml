@@ -63,7 +63,7 @@ jobs:
           CosmosEndpoint:   ${{ vars.STAGE_COSMOS_DATABASE_ID }}
           CosmosDatabaseId: ${{ vars.STAGE_COSMOS_ENDPOINT }}
         run: |
-          npm start &
+          npm run dev &
           sleep 20
 
       - name: Run selenium tests
