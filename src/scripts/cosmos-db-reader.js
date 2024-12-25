@@ -42,7 +42,9 @@ class CosmosDBReader {
                     ]
                 };
                 
+                console.log('Executing query:', query);
                 const { resources: items } = await container.items.query(query).fetchAll();
+                console.log('Query result:', items);
                 
                 // If we got less than 30 points, query for last 30 points across all time
                 if (items.length < 30) {
@@ -59,7 +61,9 @@ class CosmosDBReader {
                         `,
                         parameters: [{ name: '@source', value: source }]
                     };
+                    console.log('Executing fallback query:', query);
                     const { resources: limitedItems } = await container.items.query(query).fetchAll();
+                    console.log('Fallback query result:', limitedItems);
                     
                     if (!limitedItems || limitedItems.length === 0) {
                         return {
@@ -120,7 +124,9 @@ class CosmosDBReader {
                     ]
                 };
                 
+                console.log('Executing time range query:', query);
                 const { resources: items } = await container.items.query(query).fetchAll();
+                console.log('Time range query result:', items);
                 return { data: items };
             }
             

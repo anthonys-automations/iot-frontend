@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node server.js",
+    "test": "jest",
     "dev": "node src/server.js"
   },
   "dependencies": {
@@ -16,7 +17,10 @@
     "compression": "^1.7.4",
     "express": "^4.19.2",
     "https-proxy-agent": "^7.0.5",
-    "uuid": "^9.0.0",
-    "joi": "^17.0.0"
+    "joi": "^17.0.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }

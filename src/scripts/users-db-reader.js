@@ -1,4 +1,5 @@
 const { createCosmosClient } = require('./auth');
+const { v4: uuidv4 } = require('uuid');
 
 class UsersDBReader {
     constructor(endpoint, databaseId) {
@@ -7,10 +8,6 @@ class UsersDBReader {
         this.containerId = "users";
 
         console.log(`Initializing UsersDBReader with endpoint: ${endpoint}, database: ${databaseId}, container: ${this.containerId}`);
-        
-        this.verifyContainer().catch(error => {
-            console.error('Failed to verify users container:', error);
-        });
     }
 
     async verifyContainer() {

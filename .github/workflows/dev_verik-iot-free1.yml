@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy dev branch Node.js app to Azure Web App - verik-iot-free1
+name: Build and deploy dev branch Node.js locally for testing
 
 on:
   push:
@@ -11,7 +11,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ARM64
+    environment:
+      name: 'Testing'
+      url: http://localhost:3000
 
     steps:
       - uses: actions/checkout@v4
@@ -36,40 +39,14 @@ jobs:
           cp -r src/* deploy/
           # Install production dependencies in deploy folder
           cd deploy && npm install --production
+
+      - name: Run tests locally
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_APPLICATION_TEST_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_APPLICATION_TEST_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_APPLICATION_TEST_TENANT_ID }}
+          CosmosEndpoint:   ${{ vars.STAGE_COSMOS_DATABASE_ID }}
+          CosmosDatabaseId: ${{ vars.STAGE_COSMOS_ENDPOINT }}
+        run: |
+          npm test
       
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-app
-          path: deploy
-
-  deploy:
-    runs-on: self-hosted
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write #This is required for requesting the JWT
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: node-app
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_DEBB8D7E083E46B9A93A1F35241C8A65 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_543E342B9D9C41E3A8D8FA0C55FF44F6 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_6A0D91EBE1654FD98D981DB7ECA39D59 }}
-
-      - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
-        with:
-          app-name: 'verik-iot-free1'
-          slot-name: 'Production'
-          package: .
-          
