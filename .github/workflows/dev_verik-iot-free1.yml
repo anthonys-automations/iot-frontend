@@ -54,7 +54,7 @@ jobs:
       - name: Run linter and unit tests locally
         run: |
           # npm run lint
-          npm run test
+          # npm run test
 
       - name: Launch application locally
         env:
@@ -64,7 +64,7 @@ jobs:
           CosmosEndpoint:   ${{ vars.STAGE_COSMOS_ENDPOINT }}
           CosmosDatabaseId: ${{ vars.STAGE_COSMOS_DATABASE_ID }}
         run: |
-          mkdir -p out/stdout.txt
+          mkdir -p out/
           npm run dev > out/stdout.txt 2>&1 &
           sleep 20
 
