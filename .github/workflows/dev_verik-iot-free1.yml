@@ -23,10 +23,9 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
+          --shm-size=1gb
         ports:
           - 4444:4444
-        volumes:
-          - /tmp/selenium:/tmp/selenium  # Mount shared directory for screenshots
 
     steps:
       - uses: actions/checkout@v4
@@ -72,7 +71,7 @@ jobs:
         env:
           SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub      
         run: |
-          mkdir -p /tmp/selenium/screenshots
+          mkdir -p screenshots/
           npm run selenium
 
       # Upload screenshots as artifacts
@@ -81,7 +80,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: selenium-screenshots
-          path: /tmp/selenium/screenshots
+          path: screenshots/
 
       # Output test result summary
       - name: Test result summary
