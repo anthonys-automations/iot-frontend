@@ -86,6 +86,7 @@ jobs:
       - name: Test result summary
         if: always()      
         run: |
+          ls -laR
           if [ -f "test-results/summary.txt" ]; then
             echo "Test Summary:" && cat test-results/summary.txt
           else
