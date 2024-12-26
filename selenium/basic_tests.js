@@ -47,13 +47,10 @@ describe('Battery Voltage Graph Test', function() {
     );
     const deviceInfoText = await deviceInfo.getText();
 
-    // Print the contents of deviceInfoText to console
-    console.log(deviceInfoText);
-
     // Check that it references battery voltage
     assert(
       deviceInfoText.toLowerCase().includes('battery voltage'),
-      'Right pane does not show battery voltage'
+      `Right pane does not show battery voltage. Device info text: ${deviceInfoText}`
     );
   });
 
