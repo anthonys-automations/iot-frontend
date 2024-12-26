@@ -67,6 +67,8 @@ jobs:
           sleep 20
 
       - name: Run selenium tests
+        env:
+          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub      
         run: |
           mkdir -p test-results/screenshots
           npm run selenium
