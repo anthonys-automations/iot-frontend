@@ -86,8 +86,8 @@ jobs:
       - name: Test result summary
         if: always()      
         run: |
-          if [ -f "test-results/summary.html" ]; then
-            echo "Test Summary:" && cat test-results/summary.html
+          if [ -f "test-results/summary.txt" ]; then
+            echo "Test Summary:" && cat test-results/summary.txt
           else
             echo "No summary available."
           fi
