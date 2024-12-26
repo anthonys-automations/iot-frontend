@@ -12,7 +12,7 @@
     "dev": "node src/server.js",
     "lint": "eslint .",
     "test": "jest",
-    "selenium": "mocha --timeout 30000 --reporter list --reporter-options output=out/report.txt selenium/*.js"
+    "selenium": "mocha --timeout 30000 --reporter list selenium/*.js"
   },
   "dependencies": {
     "@azure/cosmos": "^4.0.0",
