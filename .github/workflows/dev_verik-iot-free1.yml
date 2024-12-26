@@ -25,6 +25,8 @@ jobs:
           --health-retries=3
         ports:
           - 4444:4444
+        volumes:
+          - /tmp/selenium:/tmp/selenium  # Mount shared directory for screenshots
 
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +72,7 @@ jobs:
         env:
           SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub      
         run: |
-          mkdir -p test-results/screenshots
+          mkdir -p /tmp/selenium/screenshots
           npm run selenium
 
       # Upload screenshots as artifacts
@@ -79,14 +81,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: selenium-screenshots
-          path: test-results/screenshots
+          path: /tmp/selenium/screenshots
 
       # Output test result summary
       - name: Test result summary
         if: always()      
         run: |
-          if [ -f "test-results/summary.txt" ]; then
-            echo "Test Summary:" && cat test-results/summary.txt
+          if [ -f "test-results/summary.html" ]; then
+            echo "Test Summary:" && cat test-results/summary.html
           else
             echo "No summary available."
           fi
@@ -94,5 +96,5 @@ jobs:
       - name: Stop the app
         if: always()      
         run: |
-          npm stop
+          npm stop || true
 
