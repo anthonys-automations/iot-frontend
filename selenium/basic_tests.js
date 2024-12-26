@@ -59,25 +59,25 @@ describe('Battery Voltage Graph Test', function() {
     const zoomInButton = await driver.findElement(By.id('zoomIn'));
     await zoomInButton.click();
     let screenshotZoomIn = await driver.takeScreenshot();
-    fs.writeFileSync('zoomIn.png', screenshotZoomIn, 'base64');
+    fs.writeFileSync('out/zoomIn.png', screenshotZoomIn, 'base64');
 
     // Zoom Out (−)
     const zoomOutButton = await driver.findElement(By.id('zoomOut'));
     await zoomOutButton.click();
     let screenshotZoomOut = await driver.takeScreenshot();
-    fs.writeFileSync('zoomOut.png', screenshotZoomOut, 'base64');
+    fs.writeFileSync('out/zoomOut.png', screenshotZoomOut, 'base64');
 
     // Move Left (←)
     const moveLeftButton = await driver.findElement(By.id('moveLeft'));
     await moveLeftButton.click();
     let screenshotMoveLeft = await driver.takeScreenshot();
-    fs.writeFileSync('moveLeft.png', screenshotMoveLeft, 'base64');
+    fs.writeFileSync('out/moveLeft.png', screenshotMoveLeft, 'base64');
 
     // Move Right (→)
     const moveRightButton = await driver.findElement(By.id('moveRight'));
     await moveRightButton.click();
     let screenshotMoveRight = await driver.takeScreenshot();
-    fs.writeFileSync('moveRight.png', screenshotMoveRight, 'base64');
+    fs.writeFileSync('out/moveRight.png', screenshotMoveRight, 'base64');
   });
 
   it('should verify the graph is present and not empty', async function() {

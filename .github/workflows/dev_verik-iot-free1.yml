@@ -64,14 +64,14 @@ jobs:
           CosmosEndpoint:   ${{ vars.STAGE_COSMOS_ENDPOINT }}
           CosmosDatabaseId: ${{ vars.STAGE_COSMOS_DATABASE_ID }}
         run: |
-          npm run dev &
+          mkdir -p out/stdout.txt
+          npm run dev > out/stdout.txt 2>&1 &
           sleep 20
 
       - name: Run selenium tests
         env:
           SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub      
         run: |
-          mkdir -p screenshots/
           npm run selenium
 
       # Upload screenshots as artifacts
@@ -79,16 +79,16 @@ jobs:
         if: always()      
         uses: actions/upload-artifact@v3
         with:
-          name: selenium-screenshots
-          path: screenshots/
+          name: selenium-output
+          path: out/
 
       # Output test result summary
       - name: Test result summary
         if: always()      
         run: |
           ls -laR
-          if [ -f "test-results/summary.txt" ]; then
-            echo "Test Summary:" && cat test-results/summary.txt
+          if [ -f "out/summary.txt" ]; then
+            echo "Test Summary:" && cat out/summary.txt
           else
             echo "No summary available."
           fi
