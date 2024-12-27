@@ -2,7 +2,7 @@ const { createCosmosClient } = require('./auth');
 
 class CosmosDBReader {
     constructor(endpoint, databaseId, containerId) {
-        this.client = createCosmosClient(endpoint, databaseId);
+        this.client = createCosmosClient(endpoint);
         this.databaseId = databaseId;
         this.containerId = containerId;
     }

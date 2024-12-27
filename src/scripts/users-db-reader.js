@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 class UsersDBReader {
     constructor(endpoint, databaseId) {
-        this.client = createCosmosClient(endpoint, databaseId);
+        this.client = createCosmosClient(endpoint);
         this.databaseId = databaseId;
         this.containerId = "users";
 

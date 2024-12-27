@@ -1,5 +1,4 @@
 // __tests__/UsersDBReader.test.js
-const { v4: uuidv4 } = require('uuid');
 
 // Mock uuid to return predictable values
 jest.mock('uuid', () => ({
@@ -61,7 +60,7 @@ describe('UsersDBReader', () => {
 
     describe('constructor', () => {
         it('should initialize with correct parameters', () => {
-            expect(createCosmosClient).toHaveBeenCalledWith('fake-endpoint', 'fake-db');
+            expect(createCosmosClient).toHaveBeenCalledWith('fake-endpoint');
         });
     });
 

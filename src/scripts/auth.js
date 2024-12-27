@@ -2,7 +2,7 @@ const { CosmosClient } = require('@azure/cosmos');
 const { DefaultAzureCredential, ClientSecretCredential } = require('@azure/identity');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 
-function createCosmosClient(endpoint, databaseId) {
+function createCosmosClient(endpoint) {
     let proxyAgent = null;
     if (process.env.http_proxy) {
         proxyAgent = new HttpsProxyAgent(process.env.http_proxy);
