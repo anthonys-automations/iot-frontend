@@ -1,19 +1,29 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy dev branch Node.js locally for testing
+name: Selenium tests
 
 on:
   push:
     branches:
       - dev
+      - main
   workflow_dispatch:
 
 jobs:
-  unit_tests:
-    runs-on: ARM64
+  selenium_testing:
+    runs-on: ubuntu-latest
     environment:
       name: 'Local'
+
+    services:
+      selenium:
+        image: selenium/standalone-chrome:latest
+        options: >-
+          --health-cmd="curl -s http://localhost:4444/wd/hub/status | grep 'ready'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+          --shm-size=1gb
+        ports:
+          - 4444:4444
 
     steps:
       - uses: actions/checkout@v4
@@ -35,11 +45,6 @@ jobs:
           # Install production dependencies in deploy folder
           cd deploy && npm install
 
-      - name: Run linter and unit tests locally
-        run: |
-          npm run lint
-          npm run test
-
       - name: Launch application locally
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_APPLICATION_TEST_CLIENT_ID }}
@@ -50,6 +55,17 @@ jobs:
         run: |
           npm run dev > output/app_stdout.txt 2>&1 &
           sleep 20
+
+      - name: Run selenium tests
+        env:
+          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub      
+        run: |
+          npm run selenium 2>&1 | tee output/selenium_tests_stdout.txt
+          # Check the exit status of the previous command
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "Selenium tests failed!"
+            exit 1  # Exit with a non-zero status to fail the job
+          fi
 
       # Upload screenshots as artifacts
       - name: Upload screenshots

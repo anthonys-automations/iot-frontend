@@ -40,14 +40,19 @@ describe('Battery Voltage Graph Test', function() {
     );
     await batteryVoltageButton.click();
 
-    // Wait for the device info in the right pane
+    // Wait for the device info in the right pane to contain the expected text
     const deviceInfo = await driver.wait(
-      until.elementLocated(By.id('device-info')),
-      10000
+      async () => {
+        const element = await driver.findElement(By.id('device-info'));
+        const text = await element.getText();
+        return text.toLowerCase().includes('battery voltage') ? element : null;
+      },
+      10000,
+      'Right pane did not update with battery voltage information within the timeout period'
     );
-    const deviceInfoText = await deviceInfo.getText();
 
-    // Check that it references battery voltage
+    // Verify the device info text
+    const deviceInfoText = await deviceInfo.getText();
     assert(
       deviceInfoText.toLowerCase().includes('battery voltage'),
       `Right pane does not show battery voltage. Device info text: ${deviceInfoText}`
