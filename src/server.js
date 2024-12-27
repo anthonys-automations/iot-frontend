@@ -94,12 +94,6 @@ app.get('/api/device-details', async (req, res) => {
     }
 });
 
-app.get('/api/device-months', async (req, res) => {
-  const source = req.query.source;
-  const months = await cosmosDBReader.getDistinctMonths(source);
-  res.json(months);
-});
-
 app.get('/api/current-user', async (req, res) => {
     const clientPrincipal = req.headers['x-ms-client-principal'];
     

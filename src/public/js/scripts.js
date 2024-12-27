@@ -347,15 +347,6 @@ function drawZoomableGraph(data, parameter, source) {
     return chart;
 }
 
-async function fetchMonthsForSource(source) {
-  const response = await fetch(`/api/device-months?source=${source}`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch months for source: ${source}`);
-  }
-  const months = await response.json();
-  return months;
-}
-
 async function fetchDeviceParameters(source) {
     try {
         const response = await fetch(`/api/device-parameters?source=${encodeURIComponent(source)}`);

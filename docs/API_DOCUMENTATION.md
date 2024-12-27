@@ -32,17 +32,6 @@ This document provides an overview of the API endpoints available in the applica
 
 ---
 
-### 3. Get Distinct Device Months
-- **Method:** `GET`
-- **URL:** `/api/device-months`
-- **Query Parameters:**
-  - `source` (string, required): The source of the device.
-- **Description:** Fetches distinct months for a given device source.
-- **Response:**
-  - **200 OK:** Returns an array of distinct months.
-
----
-
 ### 4. Get Current User
 - **Method:** `GET`
 - **URL:** `/api/current-user`
