@@ -29,6 +29,8 @@ module.exports = {
         "no-underscore-dangle": ["off"],
         "max-len": ["error", 200],
         "brace-style": ["error", "1tbs"],
-        "no-unused-vars": ["warn"]
+        "no-unused-vars": ["warn", {
+            "varsIgnorePattern": "displayParameterGraph"
+        }]
     }
 } 

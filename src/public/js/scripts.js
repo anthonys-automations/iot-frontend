@@ -1,3 +1,5 @@
+/* global Chart */
+
 async function checkAuth() {
     try {
         console.log('Checking authentication...');
