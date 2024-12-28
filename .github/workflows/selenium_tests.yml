@@ -35,8 +35,6 @@ jobs:
 
       - name: Prepare deployment
         run: |
-          mkdir deploy
-          mkdir output
           npm install
 
       - name: Launch application locally

@@ -5,6 +5,8 @@ logs
 *.log
 npm-debug.log*
 
+output/
+
 package-lock.json
 
 # Runtime data
