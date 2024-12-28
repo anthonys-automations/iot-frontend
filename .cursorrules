@@ -1,0 +1,1 @@
+For every code you change or create make sure to create or update documentation under /docs directory and as applicable unit tests under /tests and selenium tests under /selenium
