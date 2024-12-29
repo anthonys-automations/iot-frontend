@@ -5,22 +5,18 @@ on:
 
 jobs:
   selenium_testing:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Run OWASP DependencyCheck
         run: |
-          docker run --rm \
-              -e user=$USER \
-              -u $(id -u ${USER}):$(id -g ${USER}) \
-              --volume $(pwd):/src:z \
-              --volume $(pwd)/output:/report:z \
-              owasp/dependency-check:latest \
-              --scan /src \
-              --format "ALL" \
-              --out /report
+          /opt/dependency-check/bin/dependency-check.sh \
+            --noupdate \
+            --scan . \
+            --out output/ \
+            --format "ALL"
 
       # Upload screenshots as artifacts
       - name: Upload reports
