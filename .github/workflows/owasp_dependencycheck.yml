@@ -1,6 +1,9 @@
 name: OWASP DependencyCheck
 
 on:
+  push:
+    branches:
+      - dev
   workflow_dispatch:
 
 jobs:
@@ -9,6 +12,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Prepare NPM
+        run: |
+          npm install --package-lock
 
       - name: Run OWASP DependencyCheck
         run: |

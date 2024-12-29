@@ -3,7 +3,6 @@ name: Selenium tests
 on:
   push:
     branches:
-      - dev
       - main
   workflow_dispatch:
 

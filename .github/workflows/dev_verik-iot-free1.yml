@@ -1,4 +1,4 @@
-name: Build and deploy dev branch Node.js locally for testing
+name: Lint and Unit tests
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   unit_tests:
-    runs-on: ARM64
+    runs-on: self-hosted
     environment:
       name: 'Local'
 
