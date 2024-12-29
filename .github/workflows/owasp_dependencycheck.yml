@@ -1,0 +1,31 @@
+name: OWASP DependencyCheck
+
+on:
+  workflow_dispatch:
+
+jobs:
+  selenium_testing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run OWASP DependencyCheck
+        run: |
+          docker run --rm \
+              -e user=$USER \
+              -u $(id -u ${USER}):$(id -g ${USER}) \
+              --volume $(pwd):/src:z \
+              --volume $(pwd)/output:/report:z \
+              owasp/dependency-check:latest \
+              --scan /src \
+              --format "ALL" \
+              --out /report
+
+      # Upload screenshots as artifacts
+      - name: Upload reports
+        if: always()      
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependencycheck-reports
+          path: output/
