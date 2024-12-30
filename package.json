@@ -24,7 +24,7 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "chromedriver": "^112.0.0",
+    "chromedriver": "^131.0.4",
     "eslint": "^8.43.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.31.0",
