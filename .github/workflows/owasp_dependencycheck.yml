@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  selenium_testing:
+  owasp_dependencycheck:
     runs-on: self-hosted
 
     steps:
