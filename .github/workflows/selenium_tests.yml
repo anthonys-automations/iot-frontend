@@ -34,7 +34,7 @@ jobs:
 
       - name: Prepare deployment
         run: |
-          npm install
+          npm clean-install
 
       - name: Launch application locally
         env:

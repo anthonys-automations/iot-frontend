@@ -1,0 +1,42 @@
+name: Nightly Update Package Lock
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Runs nightly at midnight UTC
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: ./
+
+jobs:
+  update-package-lock:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: dev # Ensure the dev branch is checked out
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20' # Specify your Node.js version
+
+    - name: Delete package-lock.json
+      run: rm -f package-lock.json
+
+    - name: Generate new package-lock.json
+      run: npm install --package-lock-only
+
+    - name: Commit changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add -f package-lock.json
+        git commit -m "Update package-lock.json [Nightly Update]"
+
+    - name: Push changes
+      run: |
+        git push origin dev

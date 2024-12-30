@@ -15,7 +15,7 @@ jobs:
 
       - name: Prepare NPM
         run: |
-          npm install --package-lock
+          npm clean-install
 
       - name: Run OWASP DependencyCheck
         run: |
