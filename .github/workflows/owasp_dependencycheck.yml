@@ -22,8 +22,10 @@ jobs:
           /opt/dependency-check/bin/dependency-check.sh \
             --noupdate \
             --scan . \
+            --failOnCVSS 7 \
+            --format "ALL" \
             --out output/ \
-            --format "ALL"
+            --log output/log.log
 
       # Upload screenshots as artifacts
       - name: Upload reports
