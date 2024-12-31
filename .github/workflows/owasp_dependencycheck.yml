@@ -1,8 +1,8 @@
 name: OWASP DependencyCheck
 
 on:
-  workflow_call
-  workflow_dispatch
+  workflow_call:
+  workflow_dispatch:
 
 jobs:
   owasp_dependencycheck:
