@@ -8,10 +8,10 @@ on:
 
 jobs:
   owasp_dependencycheck:
-    uses: ./.github/workflows/reuse/owasp_dependencycheck.yml
+    uses: ./.github/workflows/reuse.owasp_dependencycheck.yml
   unit_tests:
-    uses: ./.github/workflows/reuse/unit_tests_lint.yml
+    uses: ./.github/workflows/reuse.unit_tests_lint.yml
     secrets: inherit    
   sonarqube:
-    uses: ./.github/workflows/reuse/sonarqube.yml
+    uses: ./.github/workflows/reuse.sonarqube.yml
     secrets: inherit    
