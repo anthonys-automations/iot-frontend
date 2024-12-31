@@ -1,10 +1,8 @@
 name: Lint and Unit tests
 
 on:
-  push:
-    branches:
-      - dev
-  workflow_dispatch:
+  workflow_call
+  workflow_dispatch
 
 jobs:
   unit_tests:

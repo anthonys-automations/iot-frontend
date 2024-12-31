@@ -1,0 +1,15 @@
+name: Dev push triggers
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  owasp_dependencycheck:
+    uses: ./.github/workflows/owasp_dependencycheck.yml
+  unit_tests:
+    uses: ./.github/workflows/unit_tests_lint.yml
+  sonarqube:
+    uses: ./.github/workflows/sonarqube.yml
