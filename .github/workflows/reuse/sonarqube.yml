@@ -1,4 +1,4 @@
-name: Sonarqube
+name: Reusable. Sonarqube
 
 on:
   workflow_call:

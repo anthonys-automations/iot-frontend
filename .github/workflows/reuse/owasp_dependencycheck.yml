@@ -1,4 +1,4 @@
-name: OWASP DependencyCheck
+name: Reusable. OWASP DependencyCheck
 
 on:
   workflow_call:
