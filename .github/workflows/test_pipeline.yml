@@ -14,7 +14,8 @@ jobs:
 
     steps:
       - name: Display Selected Branch
-        run: echo "Using branch: ${{ inputs.branch || github.ref }}"
+        run: |
+          echo "Using branch: ${{ inputs.branch }}"
 
       - uses: actions/checkout@v4
         with:
