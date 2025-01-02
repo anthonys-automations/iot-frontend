@@ -1,1 +1,2 @@
-For every code you change or create make sure to create or update documentation under /docs directory and as applicable unit tests under /tests and selenium tests under /selenium
+Try writing smaller functions so it's easier to unit test them.
+For every code you change or create make sure to create or update documentation under /docs directory and as applicable unit tests where they belong and selenium tests under /tests/selenium

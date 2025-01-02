@@ -176,7 +176,8 @@ class CosmosDBReader {
                 }
             });
 
-            const parameters = Array.from(parameterSet).sort();
+            // Convert to array without sorting
+            const parameters = Array.from(parameterSet);
             console.log('Found parameters:', parameters);
             return parameters;
 
