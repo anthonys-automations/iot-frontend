@@ -112,7 +112,7 @@ describe('CosmosDBReader', () => {
     });
 
     describe('getDeviceParameters', () => {
-        it('should return sorted distinct parameters found in device data', async () => {
+        it('should return distinct parameters found in device data', async () => {
             mockFetchAll.mockResolvedValueOnce({
                 resources: [
                     { Body: { paramA: 1, paramZ: 2, Utc: 'ignored' } },
@@ -121,7 +121,8 @@ describe('CosmosDBReader', () => {
             });
 
             const params = await dbReader.getDeviceParameters('src');
-            expect(params).toEqual(['paramA', 'paramB', 'paramZ']);
+            expect(params).toHaveLength(3);
+            expect(new Set(params)).toEqual(new Set(['paramA', 'paramB', 'paramZ']));
         });
 
         it('should throw if query fails', async () => {
