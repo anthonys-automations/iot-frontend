@@ -76,7 +76,7 @@ class CosmosDBReader {
                     }
                     
                     return {
-                        data: limitedItems.reverse(),
+                        data: limitedItems.toReversed(),
                         suggestedRange: {
                             start: new Date(limitedItems[0].timestamp),
                             end: new Date(limitedItems[limitedItems.length - 1].timestamp)
@@ -89,7 +89,7 @@ class CosmosDBReader {
                 thirtyDaysAgo.setDate(now.getDate() - 30);
                 
                 return {
-                    data: items.reverse(),
+                    data: items.toReversed(),
                     suggestedRange: {
                         start: thirtyDaysAgo,
                         end: now
