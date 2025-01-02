@@ -17,12 +17,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        ref: dev # Ensure the dev branch is checked out
+        ref: dev # Start from dev branch
+
+    # Create/update update_dependencies branch
+    - name: Create/Update branch
+      run: |
+        git checkout -b update_dependencies
+        git push -f origin update_dependencies
 
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '20' # Specify your Node.js version
+        node-version: '20'
 
     - name: Delete package-lock.json
       run: rm -f package-lock.json
@@ -39,10 +45,32 @@ jobs:
 
     - name: Push changes
       run: |
-        git push origin dev
+        git push origin update_dependencies
 
   test_pipeline:
+    needs: update-package-lock
     uses: ./.github/workflows/test_pipeline.yml
     secrets: inherit    
     with:
-      branch: ${{ github.ref }}
+      branch: update_dependencies
+
+  merge_if_successful:
+    needs: test_pipeline
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Merge to dev and cleanup
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Checkout dev and merge update_dependencies
+          git checkout dev
+          git pull origin dev
+          git merge origin/update_dependencies --ff-only -m "Update dependencies"
+          git push origin dev
+          
+          # Delete the update_dependencies branch
+          git push origin --delete update_dependencies
