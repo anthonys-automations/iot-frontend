@@ -1,0 +1,68 @@
+name: Test pipeline
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        required: false
+        type: string
+  workflow_dispatch:
+
+jobs:
+  unit_tests:
+    runs-on: self-hosted
+
+    steps:
+      - name: Display Selected Branch
+        run: echo "Using branch: ${{ inputs.branch || github.ref }}"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+
+      - name: Set up Node.js version
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Prepare deployment
+        run: |
+          npm clean-install
+
+      - name: Lint
+        run: |
+          npm run lint
+
+      - name: Unit tests
+        run: |
+          npm test
+
+      - name: Run OWASP DependencyCheck
+        run: |
+          /opt/dependency-check/bin/dependency-check.sh \
+            --noupdate \
+            --scan . \
+            --failOnCVSS 7 \
+            --format "ALL" \
+            --out reports/ \
+            --log reports/log.log
+
+      # Upload screenshots as artifacts
+      - name: Upload outputs
+        if: always()      
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+
+      - name: Run Sonarqube scan
+        uses: sonarsource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      # If you wish to fail your job when the Quality Gate is red, uncomment the
+      # following lines. This would typically be used to fail a deployment.
+      - uses: sonarsource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

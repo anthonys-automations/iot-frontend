@@ -10,9 +10,9 @@
     "start": "node server.js",
     "stop": "pkill -SIGINT -f telemetryFrontend",
     "dev": "node src/server.js",
-    "lint": "eslint .",
-    "test": "jest",
-    "selenium": "mocha --timeout 30000 --reporter list selenium/*.js"
+    "lint": "eslint . --format json --output-file reports/eslint.json",
+    "test": "jest --coverage",
+    "selenium": "mocha --timeout 30000 --reporter list tests/selenium/*.js"
   },
   "dependencies": {
     "@azure/cosmos": "latest",

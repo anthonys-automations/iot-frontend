@@ -22,8 +22,8 @@ jobs:
             --scan . \
             --failOnCVSS 7 \
             --format "ALL" \
-            --out output/ \
-            --log output/log.log
+            --out reports/ \
+            --log reports/log.log
 
       # Upload screenshots as artifacts
       - name: Upload reports
@@ -31,4 +31,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: owasp-dependencycheck-reports
-          path: output/
+          path: reports/

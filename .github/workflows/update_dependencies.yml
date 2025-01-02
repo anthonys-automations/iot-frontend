@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: dev # Ensure the dev branch is checked out
 
@@ -40,3 +40,9 @@ jobs:
     - name: Push changes
       run: |
         git push origin dev
+
+  test_pipeline:
+    uses: ./.github/workflows/test_pipeline.yml
+    secrets: inherit    
+    with:
+      branch: ${{ github.ref }}

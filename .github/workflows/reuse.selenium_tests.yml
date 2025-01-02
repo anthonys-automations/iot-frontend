@@ -44,14 +44,14 @@ jobs:
           CosmosEndpoint:   ${{ vars.STAGE_COSMOS_ENDPOINT }}
           CosmosDatabaseId: ${{ vars.STAGE_COSMOS_DATABASE_ID }}
         run: |
-          npm run dev > output/app_stdout.txt 2>&1 &
+          npm run dev > reports/app_stdout.txt 2>&1 &
           sleep 20
 
       - name: Run selenium tests
         env:
           SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub      
         run: |
-          npm run selenium 2>&1 | tee output/selenium_tests_stdout.txt
+          npm run selenium 2>&1 | tee reports/selenium_tests_stdout.txt
           # Check the exit status of the previous command
           if [ ${PIPESTATUS[0]} -ne 0 ]; then
             echo "Selenium tests failed!"
@@ -64,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: selenium-output
-          path: output/
+          path: reports/
 
       - name: Stop the app
         if: always()      

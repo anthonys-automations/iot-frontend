@@ -7,11 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  owasp_dependencycheck:
-    uses: ./.github/workflows/reuse.owasp_dependencycheck.yml
-  unit_tests:
-    uses: ./.github/workflows/reuse.unit_tests_lint.yml
-    secrets: inherit    
-  sonarqube:
-    uses: ./.github/workflows/reuse.sonarqube.yml
+  test_pipeline:
+    uses: ./.github/workflows/test_pipeline.yml
     secrets: inherit    
