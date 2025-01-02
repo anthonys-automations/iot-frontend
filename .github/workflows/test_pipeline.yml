@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  unit_tests:
+  tests:
     runs-on: self-hosted
 
     steps:
