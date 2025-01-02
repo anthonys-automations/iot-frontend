@@ -19,6 +19,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
           ref: ${{ inputs.branch || github.ref }}
 
       - name: Set up Node.js version
@@ -46,7 +47,7 @@ jobs:
             --failOnCVSS 7 \
             --format "ALL" \
             --out reports/ \
-            --log reports/log.log
+            --log reports/dependency-check.log
 
       # Upload screenshots as artifacts
       - name: Upload outputs
