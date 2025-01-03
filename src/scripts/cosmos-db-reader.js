@@ -207,7 +207,7 @@ class CosmosDBReader {
             
             // Transform and filter out any invalid entries
             const devices = items
-                .filter(item => item && item.source)
+                .filter(item => item?.source)
                 .map(item => item.source);
                 
             console.log('Devices retrieved:', devices);

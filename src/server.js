@@ -83,7 +83,7 @@ app.get('/api/device-details', async (req, res) => {
         );
         
         // Add null check for response data
-        if (!data || !data.data) {
+        if (!data?.data) {
             return res.status(404).json({ error: 'No data found' });
         }
         

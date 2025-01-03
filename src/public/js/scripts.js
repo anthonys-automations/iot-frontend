@@ -114,7 +114,7 @@ async function displayParameterGraph(source, parameter) {
         deviceInfo.innerHTML = `<h2>${source} - ${parameter}</h2>`;
         
         // Set the current view range to 30 days but pass all data to graph
-        if (suggestedRange && suggestedRange.start && suggestedRange.end) {
+        if (suggestedRange?.start && suggestedRange?.end) {
             currentStartTime = new Date(suggestedRange.start);
             currentEndTime = new Date(suggestedRange.end);
             
