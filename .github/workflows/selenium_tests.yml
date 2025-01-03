@@ -1,10 +1,13 @@
-name: Reusable. Selenium tests
+name: Selenium tests
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      branch:
+        required: false
+        type: string
 
 jobs:
   selenium_testing:
@@ -26,6 +29,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          ref: ${{ inputs.branch || github.ref }}
 
       - name: Set up Node.js version
         uses: actions/setup-node@v4
