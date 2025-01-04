@@ -1,69 +1,134 @@
-const { CosmosClient } = require('@azure/cosmos');
-const { DefaultAzureCredential } = require('@azure/identity');
-const { HttpsProxyAgent } = require('https-proxy-agent');
+const { createCosmosClient } = require('./auth');
 
 class CosmosDBReader {
     constructor(endpoint, databaseId, containerId) {
-        let proxyAgent = null;
-        if (process.env.http_proxy) {
-          const http_proxy = process.env.http_proxy;
-          proxyAgent = new HttpsProxyAgent(http_proxy);
-        }
-
-        this.client = new CosmosClient({
-            endpoint,
-            agent: proxyAgent,
-            aadCredentials: new DefaultAzureCredential()
-        });
+        this.client = createCosmosClient(endpoint);
         this.databaseId = databaseId;
         this.containerId = containerId;
     }
 
-    async getDeviceSources() {
-        try {
-            console.log(`Fetching device sources from database: ${this.databaseId}, container: ${this.containerId}`);
-            const database = this.client.database(this.databaseId);
-            const container = database.container(this.containerId);
-            const { resources: items } = await container.items.query('SELECT DISTINCT c.source FROM c ORDER BY c.source').fetchAll();
-            console.log(`Fetched device sources: ${JSON.stringify(items, null, 2)}`);
-            return items;
-        } catch (error) {
-            console.error(`Error fetching device sources: ${error.message}`);
-            throw error;
-        }
-    }
-
-    async getDeviceDetails(source, parameter, startTime, endTime) {
+    async getDeviceDetails(source, parameter, startTime = null, endTime = null) {
         try {
             const database = this.client.database(this.databaseId);
             const container = database.container(this.containerId);
             
-            // Convert string dates to ISO format if they aren't already
-            const start = new Date(startTime).toISOString();
-            const end = new Date(endTime).toISOString();
+            let query;
             
-            const query = {
-                query: `
-                    SELECT 
-                        c.SystemProperties["iothub-enqueuedtime"] as timestamp,
-                        c.Body
-                    FROM c 
-                    WHERE 
-                        c.Properties.source = @source 
-                        AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime 
-                        AND c.SystemProperties["iothub-enqueuedtime"] <= @endTime
-                    ORDER BY c.SystemProperties["iothub-enqueuedtime"] ASC
-                `,
-                parameters: [
-                    { name: '@source', value: source },
-                    { name: '@startTime', value: start },
-                    { name: '@endTime', value: end }
-                ]
-            };
+            // Format parameter path for Cosmos DB query
+            // This handles parameters with spaces like "body weight" -> c.Body["body weight"]
+            const parameterPath = `c.Body["${parameter}"]`;
             
-            const { resources: items } = await container.items.query(query).fetchAll();
-            console.log(`Found ${items.length} data points for ${source}`); // Debug log
-            return items;
+            if (!startTime || !endTime) {
+                // Initial load - try last 60 days first
+                const now = new Date();
+                const sixtyDaysAgo = new Date(now);
+                sixtyDaysAgo.setDate(now.getDate() - 60);
+                
+                query = {
+                    query: `
+                        SELECT TOP 1000
+                            c.SystemProperties["iothub-enqueuedtime"] as timestamp,
+                            c.Body
+                        FROM c 
+                        WHERE 
+                            c.Properties.source = @source 
+                            AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime
+                            AND IS_DEFINED(${parameterPath})
+                        ORDER BY c.SystemProperties["iothub-enqueuedtime"] DESC
+                    `,
+                    parameters: [
+                        { name: '@source', value: source },
+                        { name: '@startTime', value: sixtyDaysAgo.toISOString() }
+                    ]
+                };
+                
+                console.log('Executing query:', query);
+                const { resources: items } = await container.items.query(query).fetchAll();
+                console.log('Query result:', items);
+                
+                // If we got less than 30 points, query for last 30 points across all time
+                if (items.length < 30) {
+                    query = {
+                        query: `
+                            SELECT TOP 30
+                                c.SystemProperties["iothub-enqueuedtime"] as timestamp,
+                                c.Body
+                            FROM c 
+                            WHERE 
+                                c.Properties.source = @source
+                                AND IS_DEFINED(${parameterPath})
+                            ORDER BY c.SystemProperties["iothub-enqueuedtime"] DESC
+                        `,
+                        parameters: [{ name: '@source', value: source }]
+                    };
+                    console.log('Executing fallback query:', query);
+                    const { resources: limitedItems } = await container.items.query(query).fetchAll();
+                    console.log('Fallback query result:', limitedItems);
+                    
+                    if (!limitedItems || limitedItems.length === 0) {
+                        return {
+                            data: [],
+                            suggestedRange: {
+                                start: new Date(),
+                                end: new Date()
+                            }
+                        };
+                    }
+                    
+                    return {
+                        data: limitedItems.toReversed(),
+                        suggestedRange: {
+                            start: new Date(limitedItems[0].timestamp),
+                            end: new Date(limitedItems[limitedItems.length - 1].timestamp)
+                        }
+                    };
+                }
+                
+                // We got enough data, suggest 30 days range but return 60 days of data
+                const thirtyDaysAgo = new Date(now);
+                thirtyDaysAgo.setDate(now.getDate() - 30);
+                
+                return {
+                    data: items.toReversed(),
+                    suggestedRange: {
+                        start: thirtyDaysAgo,
+                        end: now
+                    }
+                };
+            } else {
+                // For subsequent requests with time range
+                const start = new Date(startTime);
+                const end = new Date(endTime);
+                const timeRange = end - start;
+                
+                const extendedStart = new Date(start.getTime() - timeRange);
+                const extendedEnd = new Date(end.getTime() + timeRange);
+                
+                query = {
+                    query: `
+                        SELECT 
+                            c.SystemProperties["iothub-enqueuedtime"] as timestamp,
+                            c.Body
+                        FROM c 
+                        WHERE 
+                            c.Properties.source = @source 
+                            AND c.SystemProperties["iothub-enqueuedtime"] >= @startTime 
+                            AND c.SystemProperties["iothub-enqueuedtime"] <= @endTime
+                            AND IS_DEFINED(${parameterPath})
+                        ORDER BY c.SystemProperties["iothub-enqueuedtime"] ASC
+                    `,
+                    parameters: [
+                        { name: '@source', value: source },
+                        { name: '@startTime', value: extendedStart.toISOString() },
+                        { name: '@endTime', value: extendedEnd.toISOString() }
+                    ]
+                };
+                
+                console.log('Executing time range query:', query);
+                const { resources: items } = await container.items.query(query).fetchAll();
+                console.log('Time range query result:', items);
+                return { data: items };
+            }
             
         } catch (error) {
             console.error(`Error fetching details: ${error.message}`);
@@ -111,12 +176,45 @@ class CosmosDBReader {
                 }
             });
 
-            const parameters = Array.from(parameterSet).sort();
+            // Convert to array without sorting
+            const parameters = Array.from(parameterSet);
             console.log('Found parameters:', parameters);
             return parameters;
 
         } catch (error) {
             console.error(`Error fetching parameters for source ${source}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async getDevices() {
+        try {
+            console.log('Connecting to database...');
+            const database = this.client.database(this.databaseId);
+            const container = database.container(this.containerId);
+            
+            const query = {
+                query: 'SELECT DISTINCT c.Properties.source FROM c'
+            };
+            
+            const { resources: items } = await container.items.query(query).fetchAll();
+            
+            // Add validation and transformation
+            if (!items || !Array.isArray(items)) {
+                console.error('Invalid response from database:', items);
+                return [];
+            }
+            
+            // Transform and filter out any invalid entries
+            const devices = items
+                .filter(item => item?.source)
+                .map(item => item.source);
+                
+            console.log('Devices retrieved:', devices);
+            return devices;
+            
+        } catch (error) {
+            console.error('Error in getDevices:', error);
             throw error;
         }
     }

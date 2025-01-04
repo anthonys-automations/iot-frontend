@@ -1,0 +1,14 @@
+
+App registrations, verik-iot-free1
+- Expose an API, add Application ID URI: api://dae50f83-52a4-48e6-be32-088f68e95cda
+- App roles, add new app role: connect_as_apps (any name really)
+
+App registrations, verik-iot-free1-client
+- API permissions, add permission, select verik-iot-free1, select Application permissions, connect_as_apps, grant admin consent
+
+In App Service Settings identity provider, set the following:
+Client application requirement: Allowed client applications: (add your client id)
+
+curl https://login.microsoftonline.com/verik.onmicrosoft.com/oauth2/v2.0/token -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=client_credentials&client_id=33b07d00-bd99-4302-9e47-acbe7558027f&client_secret=<REDACTED>&scope=api%3A%2F%2Fdae50f83-52a4-48e6-be32-088f68e95cda%2F.default"
+
+curl -X GET  https://verik-iot-free1.azurewebsites.net/ -H "Authorization: Bearer <REDACTED>"

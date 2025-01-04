@@ -1,5 +1,6 @@
 const express = require('express');
 const compression = require('compression');
+const Joi = require('joi');
 const app = express();
 
 const cosmosEndpoint = process.env.CosmosEndpoint;
@@ -18,31 +19,79 @@ const path = require('path');
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Set the process title for easier identification
+process.title = 'telemetryFrontend'; // This helps in identifying the process in system tools
+
+// Define validation schemas
+const deviceDetailsSchema = Joi.object({
+    source: Joi.string().required(),
+    parameter: Joi.string().required(),
+    startTime: Joi.date().iso(),
+    endTime: Joi.date().iso().when('startTime', {
+        is: Joi.exist(),
+        then: Joi.date().iso().required(),
+        otherwise: Joi.forbidden()
+    })
+});
+
+const deviceParametersSchema = Joi.object({
+    source: Joi.string().required()
+});
+
 app.get('/api/devices', async (req, res) => {
-  try {
-      const data = await cosmosDBReader.getDeviceSources();
-      res.json(data);
-  } catch (error) {
-      console.error(`Error in /api/devices: ${error.message}`);
-      res.status(500).json({ error: error.message });
-  }
+    try {
+        console.log('Fetching devices...');
+        const devices = await cosmosDBReader.getDevices();
+        
+        if (!devices || !Array.isArray(devices)) {
+            console.error('Invalid devices data:', devices);
+            return res.status(500).json({ error: 'Invalid data received from database' });
+        }
+        
+        console.log('Devices found:', devices);
+        res.json(devices);
+    } catch (error) {
+        console.error('Error fetching devices:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
 });
 
 app.get('/api/device-details', async (req, res) => {
     try {
-        const { source, parameter, startTime, endTime } = req.query;
-        const data = await cosmosDBReader.getDeviceDetails(source, parameter, startTime, endTime);
+        const { source, parameter } = req.query;
+        let { startTime, endTime } = req.query;
+        
+        // Add type checking for dates
+        if (startTime && !isNaN(new Date(startTime).getTime()) && 
+            endTime && !isNaN(new Date(endTime).getTime())) {
+            const { error } = deviceDetailsSchema.validate({ 
+                source, parameter, startTime, endTime 
+            });
+            if (error) {
+                return res.status(400).json({ error: error.details[0].message });
+            }
+        } else if (startTime || endTime) {
+            // If one of the dates is invalid
+            return res.status(400).json({ error: 'Invalid date format provided' });
+        }
+        
+        const data = await cosmosDBReader.getDeviceDetails(
+            source, 
+            parameter, 
+            startTime, 
+            endTime
+        );
+        
+        // Add null check for response data
+        if (!data?.data) {
+            return res.status(404).json({ error: 'No data found' });
+        }
+        
         res.json(data);
     } catch (error) {
         console.error('Error fetching device details:', error);
         res.status(500).json({ error: error.message });
     }
-});
-
-app.get('/api/device-months', async (req, res) => {
-  const source = req.query.source;
-  const months = await cosmosDBReader.getDistinctMonths(source);
-  res.json(months);
 });
 
 app.get('/api/current-user', async (req, res) => {
@@ -120,13 +169,14 @@ app.post('/api/signup', express.json(), async (req, res) => {
 });
 
 app.get('/api/device-parameters', async (req, res) => {
-    const source = req.query.source;
-    if (!source) {
-        return res.status(400).json({ error: 'Source parameter is required' });
+    // Validate the query parameters
+    const { error, value } = deviceParametersSchema.validate(req.query);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message });
     }
 
+    const { source } = value;
     try {
-        // Get all unique parameters for this device
         const parameters = await cosmosDBReader.getDeviceParameters(source);
         res.json(parameters);
     } catch (error) {

@@ -1,0 +1,12 @@
+name: Dev push triggers
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  test_pipeline:
+    uses: ./.github/workflows/test_pipeline.yml
+    secrets: inherit    
