@@ -56,6 +56,7 @@ jobs:
         with:
           name: test-reports
           path: reports/
+          retention-days: 20
 
       - name: Run Sonarqube scan
         uses: sonarsource/sonarqube-scan-action@v4
